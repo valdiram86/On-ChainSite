@@ -1,47 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>On-Chain SetValues</title>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
-  <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; padding: 0; }
-    header { background: #000; padding: 15px; text-align: center; font-size: 14px; color: #0f0; }
-    .painel { padding: 15px; display: none; }
-    #login { padding: 15px; text-align: center; }
-    input, button { padding: 6px 10px; margin: 3px; font-size: 14px; }
-    table { width: 100%; }
-    .azul { background-color: #3399ff !important; }
-    .verde { background-color: #00ff00 !important; }
-    .amarelo { background-color: #ffff00 !important; }
-    .rosa { background-color: #ff00ff !important; }
-  </style>
-</head>
-<body>
-
-<header>
-  <div><strong>Entre 1.654 criptos, 90% são ruído.</strong></div>
-  <div>O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.</div>
-  <div>Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong></div>
-  <div>Após 24h: R$55 via PIX ou 10 USDT (BEP20) 0xbd25d74d441e1b265812814a3f1b791769b6ca44</div>
-</header>
-
-<div id="login">
-  <input type="email" id="email" placeholder="Seu e-mail" />
-  <input type="text" id="codigo" placeholder="Código" />
-  <button onclick="verificarLogin()">Entrar</button>
-  <p id="erro" style="color:red;"></p>
-</div>
-
-<div class="painel">
-  <table id="painel" class="display nowrap"></table>
-</div>
-
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
 <script>
 const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
@@ -65,22 +21,22 @@ function verificarLogin() {
       document.querySelector(".painel").style.display = "block";
 
       const dados = json.dados || json;
-      const colunas = Object.keys(dados[0] || {});
-      const dadosFormatados = dados.map(item =>
-        colunas.map(campo =>
-          campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
-        )
-      );
+      const colunasVisiveis = Object.keys(dados[0] || {}).filter(c => !["Nome", "Símbolo"].includes(c));
+      const dadosFormatados = dados.map(item => {
+        const combinada = `${item["Nome"]} (${item["Símbolo"]})`;
+        return [combinada, ...colunasVisiveis.map(c => c === "Link" ? `<a href="${item[c]}" target="_blank">Ver</a>` : item[c])];
+      });
 
       $('#painel').DataTable({
         data: dadosFormatados,
-        columns: colunas.map(c => ({ title: c })),
+        columns: [{ title: "Nome (Símbolo)" }, ...colunasVisiveis.map(c => ({ title: c }))],
         scrollX: true,
         paging: false,
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
+          const index = colunasVisiveis.indexOf("Pontuação Balanceada") + 1;
+          const score = parseFloat(data[index]);
           if (score >= 600) $(row).addClass('azul');
           else if (score >= 500) $(row).addClass('verde');
           else if (score >= 300) $(row).addClass('amarelo');
@@ -96,6 +52,3 @@ function verificarLogin() {
     });
 }
 </script>
-
-</body>
-</html>
