@@ -1,28 +1,62 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Teste API com seu e-mail</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain SetValues</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+    table { width: 100%; }
+    .azul { background-color: #3399ff !important; }
+    .verde { background-color: #00ff00 !important; }
+    .amarelo { background-color: #ffff00 !important; }
+    .rosa { background-color: #ff00ff !important; }
+  </style>
 </head>
-<body style="background:#111;color:#0f0;font-family:Arial;padding:20px;">
-  <h2>Teste com e-mail autorizado</h2>
-  <pre id="resultado">Conectando...</pre>
+<body>
+  <h2 style="text-align:center;">Painel On-Chain SetValues</h2>
+  <table id="painel" class="display nowrap"></table>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
   <script>
-    const email = "valdiram.lima.2013@gmail.com";
-    const url = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec?email=" + encodeURIComponent(email);
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    fetch(url)
+    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
       .then(res => res.json())
-      .then(dados => {
-        if (dados.erro) {
-          document.getElementById("resultado").innerText = "Erro da API: " + dados.erro;
-        } else {
-          document.getElementById("resultado").innerText = JSON.stringify(dados.slice(0, 3), null, 2);
-        }
+      .then(json => {
+        const dados = json.dados || json;
+        const colunas = Object.keys(dados[0] || {});
+        const dadosFormatados = dados.map(item =>
+          colunas.map(campo =>
+            campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
+          )
+        );
+
+        $('#painel').DataTable({
+          data: dadosFormatados,
+          columns: colunas.map(c => ({ title: c })),
+          scrollX: true,
+          dom: 'Bfrtip',
+          buttons: ['csv', 'pdf'],
+          createdRow: function(row, data) {
+            const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
+            if (score >= 600) $(row).addClass('azul');
+            else if (score >= 500) $(row).addClass('verde');
+            else if (score >= 300) $(row).addClass('amarelo');
+            else if (score >= 250) $(row).addClass('rosa');
+          },
+          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+        });
       })
-      .catch(err => {
-        document.getElementById("resultado").innerText = "Erro de conexão: " + err;
+      .catch(() => {
+        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
       });
   </script>
 </body>
