@@ -7,16 +7,30 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
-    table { width: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+      color: #0f0;
+    }
+    table {
+      width: 100%;
+      font-size: 14px;
+    }
     .azul { background-color: #3399ff !important; }
     .verde { background-color: #00ff00 !important; }
     .amarelo { background-color: #ffff00 !important; }
     .rosa { background-color: #ff00ff !important; }
+    div.dataTables_info { display: none !important; }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Painel On-Chain SetValues</h2>
+  <h2>Painel On-Chain SetValues</h2>
   <table id="painel" class="display nowrap"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
@@ -42,9 +56,12 @@
         $('#painel').DataTable({
           data: dadosFormatados,
           columns: colunas.map(c => ({ title: c })),
-          scrollX: true,
+          scrollY: '600px',
+          scrollCollapse: true,
+          paging: false,
+          ordering: true,
           dom: 'Bfrtip',
-          buttons: ['csv', 'pdf'],
+          buttons: ['csv'],
           createdRow: function(row, data) {
             const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
             if (score >= 600) $(row).addClass('azul');
@@ -52,7 +69,9 @@
             else if (score >= 300) $(row).addClass('amarelo');
             else if (score >= 250) $(row).addClass('rosa');
           },
-          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          }
         });
       })
       .catch(() => {
@@ -61,5 +80,3 @@
   </script>
 </body>
 </html>
-
-       
