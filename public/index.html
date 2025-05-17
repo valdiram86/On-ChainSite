@@ -1,54 +1,99 @@
-<script>
-const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain SetValues</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <style>
+    body { font-family: Arial, sans-serif; background: #000; color: #eee; padding: 10px; margin: 0; }
+    header { color: #0f0; text-align: center; font-size: 14px; margin-bottom: 10px; }
+    .painel { display: none; }
+    input, button { padding: 8px; font-size: 14px; margin: 3px; }
+    #erro { color: red; text-align: center; margin: 5px 0; }
+    .azul { background-color: #3399ff !important; }
+    .verde { background-color: #00ff00 !important; }
+    .amarelo { background-color: #ffff00 !important; color: #000; }
+    .rosa { background-color: #ff00ff !important; }
+  </style>
+</head>
+<body>
 
-function verificarLogin() {
-  const email = document.getElementById("email").value.trim();
-  const codigo = document.getElementById("codigo").value.trim();
-  if (!email || !codigo) {
-    document.getElementById("erro").innerText = "Preencha e-mail e código.";
-    return;
-  }
+  <header>
+    <strong>Entre 1.654 criptos, 90% são ruído.</strong><br />
+    O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br /><br />
+    Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br />
+    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
+    <span style="color: #0f0;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
+  </header>
 
-  fetch(`${urlAPI}?email=${email}&codigo=${codigo}`)
-    .then(res => res.json())
-    .then(json => {
-      if (json.erro) {
-        document.getElementById("erro").innerText = json.erro;
+  <div id="login" style="text-align:center;">
+    <input type="email" id="email" placeholder="Seu e-mail autorizado" />
+    <input type="text" id="codigo" placeholder="Código recebido" />
+    <button onclick="verificarLogin()">Entrar</button>
+    <div id="erro"></div>
+  </div>
+
+  <div class="painel">
+    <h2 style="text-align:center;">Painel On-Chain SetValues</h2>
+    <table id="painel" class="display nowrap" style="width:100%"></table>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script>
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+
+    function verificarLogin() {
+      const email = document.getElementById("email").value.trim();
+      const codigo = document.getElementById("codigo").value.trim();
+      if (!email || !codigo) {
+        document.getElementById("erro").innerText = "Preencha e-mail e código.";
         return;
       }
 
-      document.getElementById("login").style.display = "none";
-      document.querySelector(".painel").style.display = "block";
+      fetch(`${urlAPI}?email=${email}&codigo=${codigo}`)
+        .then(res => res.json())
+        .then(json => {
+          if (json.erro) {
+            document.getElementById("erro").innerText = json.erro;
+            return;
+          }
 
-      const dados = json.dados || json;
-      const colunasVisiveis = Object.keys(dados[0] || {}).filter(c => !["Nome", "Símbolo"].includes(c));
-      const dadosFormatados = dados.map(item => {
-        const combinada = `${item["Nome"]} (${item["Símbolo"]})`;
-        return [combinada, ...colunasVisiveis.map(c => c === "Link" ? `<a href="${item[c]}" target="_blank">Ver</a>` : item[c])];
-      });
+          document.getElementById("login").style.display = "none";
+          document.querySelector(".painel").style.display = "block";
 
-      $('#painel').DataTable({
-        data: dadosFormatados,
-        columns: [{ title: "Nome (Símbolo)" }, ...colunasVisiveis.map(c => ({ title: c }))],
-        scrollX: true,
-        paging: false,
-        searching: false,
-        info: false,
-        createdRow: function(row, data) {
-          const index = colunasVisiveis.indexOf("Pontuação Balanceada") + 1;
-          const score = parseFloat(data[index]);
-          if (score >= 600) $(row).addClass('azul');
-          else if (score >= 500) $(row).addClass('verde');
-          else if (score >= 300) $(row).addClass('amarelo');
-          else if (score >= 250) $(row).addClass('rosa');
-        },
-        language: {
-          url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-        }
-      });
-    })
-    .catch(() => {
-      document.getElementById("erro").innerText = "Erro ao carregar dados.";
-    });
-}
-</script>
+          const dados = json.dados || json;
+          const colunasVisiveis = Object.keys(dados[0] || {}).filter(c => !["Nome", "Símbolo"].includes(c));
+          const dadosFormatados = dados.map(item => {
+            const combinada = `${item["Nome"]} (${item["Símbolo"]})`;
+            return [combinada, ...colunasVisiveis.map(c => c === "Link" ? `<a href="${item[c]}" target="_blank">Ver</a>` : item[c])];
+          });
+
+          $('#painel').DataTable({
+            data: dadosFormatados,
+            columns: [{ title: "Nome (Símbolo)" }, ...colunasVisiveis.map(c => ({ title: c }))],
+            scrollX: true,
+            paging: false,
+            searching: false,
+            info: false,
+            createdRow: function(row, data) {
+              const index = colunasVisiveis.indexOf("Pontuação Balanceada") + 1;
+              const score = parseFloat(data[index]);
+              if (score >= 600) $(row).addClass('azul');
+              else if (score >= 500) $(row).addClass('verde');
+              else if (score >= 300) $(row).addClass('amarelo');
+              else if (score >= 250) $(row).addClass('rosa');
+            },
+            language: {
+              url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+            }
+          });
+        })
+        .catch(() => {
+          document.getElementById("erro").innerText = "Erro ao carregar dados.";
+        });
+    }
+  </script>
+</body>
+</html>
