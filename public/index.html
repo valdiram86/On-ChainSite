@@ -2,25 +2,23 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>On-Chain SetValues</title>
+  <title>Painel On-Chain SetValues</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
-    body { background: #111; color: #eee; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    header {
-      background: #000; color: #0f0; padding: 20px;
-      text-align: center; font-size: 16px; line-height: 1.6;
-    }
-    table { width: 95%; margin: 20px auto; }
-    table.dataTable tbody tr.azul { background-color: #3399ff !important; }
-    table.dataTable tbody tr.verde { background-color: #00ff00 !important; }
-    table.dataTable tbody tr.amarelo { background-color: #ffff00 !important; color: #000 !important; }
-    table.dataTable tbody tr.rosa { background-color: #ff00ff !important; }
-    footer {
-      background: #000; color: #0ff; text-align: center;
-      padding: 10px; font-size: 14px; margin-top: 20px;
-    }
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; padding: 0; }
+    header { background: #000; padding: 20px; text-align: center; color: #0f0; font-size: 16px; line-height: 1.5; }
+    #destaqueTop { text-align: center; margin: 20px; }
+    #tabela_wrapper { padding: 0 15px; }
+    table.dataTable thead th { position: sticky; top: 0; background: #222; z-index: 2; }
+    .azul { background-color: #3399ff !important; }
+    .verde { background-color: #00ff00 !important; }
+    .amarelo { background-color: #ffff00 !important; }
+    .rosaneon { background-color: #ff00ff !important; }
+    #controle { display: flex; justify-content: space-between; padding: 10px 15px; align-items: center; }
+    #controle button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
+    footer { display: none; }
   </style>
 </head>
 <body>
@@ -29,63 +27,69 @@
     <strong>Entre 1.654 criptos, 90% são ruído.</strong><br />
     O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br /><br />
     Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br />
-    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20):<br />
-    <code>0xbd25d74d441e1b265812814a3f1b791769b6ca44</code>
+    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
+    <span style="color: #0f0;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
   </header>
 
-  <table id="tabela" class="display nowrap"></table>
+  <div id="destaqueTop">
+    <div id="controle">
+      <button id="csv">CSV</button>
+      <input type="text" id="search" placeholder="Buscar registros" />
+    </div>
+  </div>
 
-  <footer>
-    Isso não é bola de cristal. É uma bússola em meio ao garimpo.
-  </footer>
+  <table id="tabela" class="display nowrap" style="width:100%"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <script>
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
-    const email = "valdiram.lima.2013@gmail.com";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    const EMAIL = "valdiram.lima.2013@gmail.com";
 
-    fetch(`${urlAPI}?email=${email}`)
+    fetch(`${API_URL}?email=${EMAIL}`)
       .then(res => res.json())
-      .then(retorno => {
-        const dados = retorno.dados || retorno;
+      .then(json => {
+        const dados = json.dados;
         const colunas = Object.keys(dados[0]);
         const remover = ["Volume", "Market Cap"];
         const colunasFiltradas = colunas.filter(c => !remover.includes(c));
-        const dadosFiltrados = dados.map(linha =>
-          colunasFiltradas.map(c =>
-            c === "Link" ? `<a href="${linha[c]}" target="_blank">🔗</a>` : linha[c]
-          )
-        );
+        const dadosFiltrados = dados.map(l => colunasFiltradas.map(c => c === "Link" ? `<a href="${l[c]}" target="_blank">Ver</a>` : l[c]));
 
         const thead = '<thead><tr>' + colunasFiltradas.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
         document.getElementById("tabela").innerHTML = thead;
 
-        $('#tabela').DataTable({
+        const table = $('#tabela').DataTable({
           data: dadosFiltrados,
           columns: colunasFiltradas.map(c => ({ title: c })),
-          scrollY: '700px',
-          scrollCollapse: true,
           paging: false,
+          scrollY: '600px',
+          scrollCollapse: true,
           dom: 'Bfrtip',
-          buttons: ['csv'],
+          buttons: [{ extend: 'csv', text: 'Exportar CSV', className: 'exportarCSV' }],
           createdRow: function (row, data) {
-            const score = parseFloat(data[colunasFiltradas.indexOf("Pontuação Balanceada")]);
+            const score = parseFloat(data[10]);
             if (score >= 600) $(row).addClass('azul');
             else if (score >= 500) $(row).addClass('verde');
             else if (score >= 300) $(row).addClass('amarelo');
-            else if (score >= 250) $(row).addClass('rosa');
+            else if (score >= 250) $(row).addClass('rosaneon');
           },
-          language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-          }
+          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+        });
+
+        document.getElementById("csv").addEventListener("click", () => {
+          document.querySelector(".buttons-csv").click();
+        });
+
+        $('#search').on('keyup', function () {
+          table.search(this.value).draw();
         });
       })
       .catch(() => {
-        document.body.innerHTML += "<h3 style='color:red;text-align:center;'>Erro ao carregar os dados da API.</h3>";
+        document.getElementById("tabela").innerHTML = "<tr><td>Erro ao carregar dados.</td></tr>";
       });
   </script>
 </body>
