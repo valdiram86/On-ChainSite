@@ -2,61 +2,74 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
+  <title>Painel On-Chain SetValues</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>On-Chain SetValues</title>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
-    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
-    table { width: 100%; }
-    .azul { background-color: #3399ff !important; }
-    .verde { background-color: #00ff00 !important; }
-    .amarelo { background-color: #ffff00 !important; }
-    .rosa { background-color: #ff00ff !important; }
+    body { background: #111; color: #eee; font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    h1 { text-align: center; color: #0f0; }
+    table.dataTable tbody tr.azul { background-color: #3399ff !important; }
+    table.dataTable tbody tr.verde { background-color: #00ff00 !important; }
+    table.dataTable tbody tr.amarelo { background-color: #ffff00 !important; color: #000 !important; }
+    table.dataTable tbody tr.rosa { background-color: #ff00ff !important; }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">Painel On-Chain SetValues</h2>
-  <table id="painel" class="display nowrap"></table>
+  <h1>Painel On-Chain SetValues</h1>
+  <table id="tabela" class="display nowrap" width="100%"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
   <script>
     const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    const email = "valdiram.lima.2013@gmail.com";
 
-    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
+    fetch(`${urlAPI}?email=${email}`)
       .then(res => res.json())
-      .then(json => {
-        const dados = json.dados || json;
-        const colunas = Object.keys(dados[0] || {});
-        const dadosFormatados = dados.map(item =>
-          colunas.map(campo =>
-            campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
-          )
-        );
+      .then(retorno => {
+        if (!retorno || !retorno.dados || retorno.dados.length === 0) {
+          alert("Nenhum dado encontrado.");
+          return;
+        }
 
-        $('#painel').DataTable({
-          data: dadosFormatados,
-          columns: colunas.map(c => ({ title: c })),
-          scrollX: true,
+        const dados = retorno.dados;
+        const colunas = Object.keys(dados[0]);
+        const remover = ["Volume", "Market Cap"];
+        const colunasFiltradas = colunas.filter(c => !remover.includes(c));
+        const dadosFiltrados = dados.map(linha => colunasFiltradas.map(c => {
+          if (c === "Link") return `<a href="${linha[c]}" target="_blank">Abrir</a>`;
+          return linha[c];
+        }));
+
+        const thead = '<thead><tr>' + colunasFiltradas.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
+        document.getElementById("tabela").innerHTML = thead;
+
+        $('#tabela').DataTable({
+          data: dadosFiltrados,
+          columns: colunasFiltradas.map(c => ({ title: c })),
+          scrollY: '700px',
+          scrollCollapse: true,
+          paging: false, // DESATIVA PAGINAÇÃO
           dom: 'Bfrtip',
-          buttons: ['csv', 'pdf'],
-          createdRow: function(row, data) {
-            const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
+          buttons: ['csv'],
+          createdRow: function (row, data) {
+            const score = parseFloat(data[10]);
             if (score >= 600) $(row).addClass('azul');
             else if (score >= 500) $(row).addClass('verde');
             else if (score >= 300) $(row).addClass('amarelo');
             else if (score >= 250) $(row).addClass('rosa');
           },
-          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          }
         });
       })
       .catch(() => {
-        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
+        alert("Erro ao carregar dados.");
       });
   </script>
 </body>
