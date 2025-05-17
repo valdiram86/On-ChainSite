@@ -2,64 +2,23 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <title>On-Chain SetValues</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
-  <style>
-    body { background: #111; color: #eee; font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    table a { color: #0ff; }
-    .azul { background-color: #3399ff !important; }
-    .verde { background-color: #00ff00 !important; }
-    .amarelo { background-color: #ffff00 !important; }
-    .rosaneon { background-color: #ff00ff !important; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Teste de API - OnChain</title>
 </head>
-<body>
-  <h2 style="text-align:center; margin-top:20px;">Painel On-Chain SetValues</h2>
-  <table id="painel" class="display nowrap" style="width:95%; margin: auto;"></table>
-
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<body style="background:#111;color:#0f0;font-family:Arial;padding:20px;">
+  <h2>Teste de Conexão com API do Google Sheets</h2>
+  <pre id="resultado">Carregando...</pre>
 
   <script>
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    const url = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    fetch(urlAPI)
-      .then(response => response.json())
-      .then(data => {
-        const colunas = Object.keys(data[0]);
-        const dados = data.map(linha => colunas.map(c => linha[c]));
-
-        const thead = '<thead><tr>' + colunas.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
-        document.getElementById("painel").innerHTML = thead;
-
-        $('#painel').DataTable({
-          data: dados,
-          columns: colunas.map(c => ({ title: c })),
-          scrollX: true,
-          dom: 'Bfrtip',
-          buttons: ['csv', 'pdf'],
-          createdRow: function (row, data) {
-            const pontuacao = parseFloat(data[8]); // ajusta a coluna se necessário
-            if (pontuacao >= 600) $(row).addClass('azul');
-            else if (pontuacao >= 500) $(row).addClass('verde');
-            else if (pontuacao >= 300) $(row).addClass('amarelo');
-            else if (pontuacao >= 250) $(row).addClass('rosaneon');
-          },
-          language: {
-            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-          }
-        });
+    fetch(url)
+      .then(res => res.json())
+      .then(dados => {
+        document.getElementById("resultado").innerText = JSON.stringify(dados.slice(0, 3), null, 2);
       })
-      .catch(() => {
-        document.body.innerHTML += "<p style='color:red;text-align:center;'>Erro ao carregar os dados.</p>";
+      .catch(err => {
+        document.getElementById("resultado").innerText = "Erro ao conectar: " + err;
       });
   </script>
 </body>
