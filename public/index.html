@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -5,46 +6,53 @@
   <title>Painel On-Chain SetValues</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
     body { font-family: Arial, sans-serif; background: #111; color: #eee; margin: 0; padding: 0; }
-    header { background: #000; padding: 20px; text-align: center; color: #0f0; font-size: 16px; line-height: 1.5; }
-    #destaqueTop { text-align: center; margin: 20px; }
+    header {
+      background: #000; padding: 20px; text-align: center;
+      color: #0f0; font-size: 16px; line-height: 1.5;
+    }
     #tabela_wrapper { padding: 0 15px; }
-    table.dataTable thead th { position: sticky; top: 0; background: #222; z-index: 2; }
+    table.dataTable thead th {
+      position: sticky;
+      top: 0;
+      background: #222;
+      z-index: 2;
+    }
     .azul { background-color: #3399ff !important; }
     .verde { background-color: #00ff00 !important; }
     .amarelo { background-color: #ffff00 !important; }
     .rosaneon { background-color: #ff00ff !important; }
-    #controle { display: flex; justify-content: space-between; padding: 10px 15px; align-items: center; }
-    #controle button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
-    footer { display: none; }
+    #loginBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background-color: #0f0;
+      color: #000;
+      font-weight: bold;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
+  <button id="loginBtn" onclick="alert('Sistema de login em breve...')">Login</button>
+
   <header>
-    <strong>Entre 1.654 criptos, 90% são ruído.</strong><br />
+    <strong>Entre 1.653 criptos, 90% são ruído.</strong><br />
     O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br /><br />
     Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br />
     Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
     <span style="color: #0f0;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
   </header>
 
-  <div id="destaqueTop">
-    <div id="controle">
-      <button id="csv">CSV</button>
-      <input type="text" id="search" placeholder="Buscar registros" />
-    </div>
-  </div>
-
   <table id="tabela" class="display nowrap" style="width:100%"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
@@ -54,22 +62,27 @@
       .then(res => res.json())
       .then(json => {
         const dados = json.dados;
+        if (!dados || !Array.isArray(dados)) {
+          throw new Error("Formato inválido");
+        }
+
         const colunas = Object.keys(dados[0]);
         const remover = ["Volume", "Market Cap"];
         const colunasFiltradas = colunas.filter(c => !remover.includes(c));
-        const dadosFiltrados = dados.map(l => colunasFiltradas.map(c => c === "Link" ? `<a href="${l[c]}" target="_blank">Ver</a>` : l[c]));
+        const dadosFiltrados = dados.map(l => colunasFiltradas.map(c =>
+          c === "Link" ? `<a href="${l[c]}" target="_blank">Ver</a>` : l[c]
+        ));
 
         const thead = '<thead><tr>' + colunasFiltradas.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
         document.getElementById("tabela").innerHTML = thead;
 
-        const table = $('#tabela').DataTable({
+        $('#tabela').DataTable({
           data: dadosFiltrados,
           columns: colunasFiltradas.map(c => ({ title: c })),
           paging: false,
           scrollY: '600px',
           scrollCollapse: true,
-          dom: 'Bfrtip',
-          buttons: [{ extend: 'csv', text: 'Exportar CSV', className: 'exportarCSV' }],
+          searching: false,
           createdRow: function (row, data) {
             const score = parseFloat(data[10]);
             if (score >= 600) $(row).addClass('azul');
@@ -77,20 +90,15 @@
             else if (score >= 300) $(row).addClass('amarelo');
             else if (score >= 250) $(row).addClass('rosaneon');
           },
-          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
-        });
-
-        document.getElementById("csv").addEventListener("click", () => {
-          document.querySelector(".buttons-csv").click();
-        });
-
-        $('#search').on('keyup', function () {
-          table.search(this.value).draw();
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          }
         });
       })
       .catch(() => {
         document.getElementById("tabela").innerHTML = "<tr><td>Erro ao carregar dados.</td></tr>";
       });
   </script>
+
 </body>
 </html>
