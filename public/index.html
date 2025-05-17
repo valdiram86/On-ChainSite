@@ -1,24 +1,28 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Teste de API - OnChain</title>
+  <title>Teste API com seu e-mail</title>
 </head>
 <body style="background:#111;color:#0f0;font-family:Arial;padding:20px;">
-  <h2>Teste de Conexão com API do Google Sheets</h2>
-  <pre id="resultado">Carregando...</pre>
+  <h2>Teste com e-mail autorizado</h2>
+  <pre id="resultado">Conectando...</pre>
 
   <script>
-    const url = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    const email = "valdiram.lima.2013@gmail.com";
+    const url = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec?email=" + encodeURIComponent(email);
 
     fetch(url)
       .then(res => res.json())
       .then(dados => {
-        document.getElementById("resultado").innerText = JSON.stringify(dados.slice(0, 3), null, 2);
+        if (dados.erro) {
+          document.getElementById("resultado").innerText = "Erro da API: " + dados.erro;
+        } else {
+          document.getElementById("resultado").innerText = JSON.stringify(dados.slice(0, 3), null, 2);
+        }
       })
       .catch(err => {
-        document.getElementById("resultado").innerText = "Erro ao conectar: " + err;
+        document.getElementById("resultado").innerText = "Erro de conexão: " + err;
       });
   </script>
 </body>
