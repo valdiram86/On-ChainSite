@@ -2,93 +2,64 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <title>Painel On-Chain SetValues</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain SetValues</title>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
-    body { background: #000; color: #0f0; font-family: Arial; margin: 0; padding: 10px; }
-    h1 { text-align: center; color: #0f0; }
-    table { width: 100%; margin-top: 10px; border-collapse: collapse; }
-    th, td { padding: 5px 10px; text-align: left; }
-    th { background: #111; position: sticky; top: 0; }
-    tr:hover { background: #222; }
+    body { font-family: Arial, sans-serif; background: #111; color: #eee; padding: 20px; }
+    table { width: 100%; }
     .azul { background-color: #3399ff !important; }
     .verde { background-color: #00ff00 !important; }
     .amarelo { background-color: #ffff00 !important; }
-    .rosaneon { background-color: #ff00ff !important; }
-    .erro { background-color: #222; color: #f00; text-align: center; margin-top: 20px; padding: 10px; }
-    footer { text-align: center; padding: 10px; background: #000; color: #00ffff; font-size: 14px; }
-    #login { position: absolute; top: 10px; left: 10px; }
-    #login button { background: #0f0; color: #000; font-weight: bold; border: none; padding: 5px 10px; cursor: pointer; }
+    .rosa { background-color: #ff00ff !important; }
   </style>
 </head>
 <body>
+  <h2 style="text-align:center;">Painel On-Chain SetValues</h2>
+  <table id="painel" class="display nowrap"></table>
 
-<div id="login">
-  <button onclick="window.location.href='login.html'">Login</button>
-</div>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
 
-<h1>Painel On-Chain SetValues</h1>
+  <script>
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-<div style="text-align:center;">
-  <p><strong>Entre 1.654 criptos, 90% são ruído.<br />
-  O <span style="color:lime">On-Chain SetValues</span> remove o ruído e te mostra onde focar.</strong></p>
-  <p>Acesso gratuito 24h:<br />
-  <span style="color:#00ff00">onchainsetvalues@gmail.com</span><br />
-  Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
-  <span style="color:lime">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span></p>
-</div>
+    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
+      .then(res => res.json())
+      .then(json => {
+        const dados = json.dados || json;
+        const colunas = Object.keys(dados[0] || {});
+        const dadosFormatados = dados.map(item =>
+          colunas.map(campo =>
+            campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
+          )
+        );
 
-<table id="tabela" class="display nowrap"></table>
-<div id="erro" class="erro" style="display:none;">Erro ao carregar dados.</div>
-
-<footer>
-  Isso não é bola de cristal. É uma bússola em meio ao garimpo.
-</footer>
-
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
-<script>
-  const urlAPI = "https://script.google.com/macros/s/AKfycbzASa44mjERtZvjBCsv_pxpKAJbv8tp_rOmpPdNHUWWk1CVSFKSSOpM-LuYPzJ5PJQn/exec";
-
-  fetch(urlAPI + "?email=onchainsetvalues@gmail.com")
-    .then(r => r.json())
-    .then(json => {
-      if (!json || !json.dados || json.dados.length === 0) {
-        document.getElementById("erro").style.display = "block";
-        return;
-      }
-
-      const dados = json.dados;
-      const colunas = Object.keys(dados[0]);
-      const cabecalho = '<thead><tr>' + colunas.map(c => `<th>${c}</th>`).join('') + '</tr></thead>';
-      const corpo = dados.map(linha => {
-        return '<tr>' + colunas.map(c => `<td>${linha[c]}</td>`).join('') + '</tr>';
-      }).join('');
-
-      document.getElementById("tabela").innerHTML = cabecalho + "<tbody>" + corpo + "</tbody>";
-
-      $('#tabela').DataTable({
-        paging: false,
-        searching: false,
-        ordering: true,
-        scrollY: '70vh',
-        scrollCollapse: true,
-        createdRow: function (row, data, dataIndex) {
-          const score = parseFloat(data[7]);
-          if (score >= 600) $(row).addClass('azul');
-          else if (score >= 500) $(row).addClass('verde');
-          else if (score >= 300) $(row).addClass('amarelo');
-          else if (score >= 250) $(row).addClass('rosaneon');
-        },
-        language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+        $('#painel').DataTable({
+          data: dadosFormatados,
+          columns: colunas.map(c => ({ title: c })),
+          scrollX: true,
+          dom: 'Bfrtip',
+          buttons: ['csv', 'pdf'],
+          createdRow: function(row, data) {
+            const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
+            if (score >= 600) $(row).addClass('azul');
+            else if (score >= 500) $(row).addClass('verde');
+            else if (score >= 300) $(row).addClass('amarelo');
+            else if (score >= 250) $(row).addClass('rosa');
+          },
+          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+        });
+      })
+      .catch(() => {
+        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
       });
-    })
-    .catch(() => {
-      document.getElementById("erro").style.display = "block";
-    });
-</script>
-
+  </script>
 </body>
 </html>
+
+       
