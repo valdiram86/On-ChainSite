@@ -8,54 +8,63 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #000;
+      background: #000;
       color: #0f0;
-      padding: 10px;
+      padding: 15px;
     }
+
     h2 {
       text-align: center;
-      color: #0f0;
-      margin-bottom: 10px;
+      color: #00ff00;
+      margin-bottom: 5px;
     }
+
     .mensagem {
       text-align: center;
-      color: #0f0;
-      margin-bottom: 10px;
-      font-weight: bold;
+      font-size: 14px;
+      margin-bottom: 20px;
     }
-    table {
-      width: 100%;
-      color: #fff;
-    }
-    .verde-escuro {
-      background-color: #104910 !important;
-    }
-    thead th {
+
+    table.dataTable thead th {
       position: sticky;
       top: 0;
       background: #111;
-      z-index: 1;
+      color: #fff;
     }
-    td:nth-child(1), td:nth-child(2) {
-      white-space: nowrap;
-      padding-right: 15px;
+
+    .azul     { background-color: #004b91 !important; }
+    .verde    { background-color: #003300 !important; }
+    .cinza    { background-color: #444444 !important; }
+    .cinza2   { background-color: #333333 !important; }
+
+    td:nth-child(2) {
+      padding-right: 20px; /* espaço entre Nome e Símbolo */
     }
-    .ver {
-      color: #00f;
+
+    a {
+      color: #0cf;
+    }
+
+    .dataTables_filter, .dataTables_info, .dataTables_paginate {
+      display: none !important;
+    }
+
+    .dataTables_wrapper .dataTables_length {
+      display: none !important;
     }
   </style>
 </head>
 <body>
+  <h2>Painel On-Chain SetValues</h2>
   <div class="mensagem">
     Entre 1.654 criptos, 90% são ruído.<br>
     O <b>On-Chain SetValues</b> remove o ruído e te mostra onde focar.<br>
     Acesso gratuito 24h: <b>onchainsetvalues@gmail.com</b><br>
-    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20) <br>
-    <span style="color:#0f0">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
+    Após 24h: R$55 via PIX ou 10 USDT (BEP20)<br>
+    <code>0xbd25d74d441e1b265812814a3f1b791769b6ca44</code>
   </div>
 
-  <h2>Painel On-Chain SetValues</h2>
-  <table id="painel" class="display nowrap"></table>
+  <table id="painel" class="display nowrap" style="width:100%"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
@@ -66,30 +75,29 @@
       .then(res => res.json())
       .then(json => {
         const dados = json.dados || json;
-        const remover = ["Preço", "Volume", "Market Cap"];
-        const colunas = Object.keys(dados[0] || {}).filter(c => !remover.includes(c));
+        const colunasVisiveis = [
+          "Rank", "Nome", "Símbolo", "Pontuação On-Chain", "Link", "Pontuação Balanceada"
+        ];
 
+        const colunas = colunasVisiveis.map(titulo => ({ title: titulo }));
         const dadosFormatados = dados.map(item =>
-          colunas.map(campo =>
-            campo === "Link"
-              ? `<a class="ver" href="${item[campo]}" target="_blank">Ver</a>`
-              : item[campo]
+          colunasVisiveis.map(campo =>
+            campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
           )
         );
 
         $('#painel').DataTable({
           data: dadosFormatados,
-          columns: colunas.map(c => ({ title: c })),
-          scrollX: true,
+          columns: colunas,
+          scrollY: '65vh',
+          scrollCollapse: true,
           paging: false,
-          searching: false,
-          info: false,
           createdRow: function(row, data) {
-            const idx = colunas.indexOf("Pontuação Balanceada");
-            const score = parseFloat(data[idx]);
-            if (score >= 300 && score < 500) {
-              $(row).addClass("verde-escuro");
-            }
+            const score = parseFloat(data[colunasVisiveis.indexOf("Pontuação Balanceada")]);
+            if (score >= 600) $(row).addClass('azul');
+            else if (score >= 500) $(row).addClass('verde');
+            else if (score >= 300) $(row).addClass('cinza');
+            else if (score >= 250) $(row).addClass('cinza2');
           },
           language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
         });
