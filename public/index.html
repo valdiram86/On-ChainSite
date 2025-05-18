@@ -27,10 +27,8 @@ function verificarLogin() {
         return;
       }
 
-      // Remover "Preço" e "Volume"
-      const colunas = Object.keys(dados[0]).filter(c =>
-        c.trim() !== "Preço" && c.trim() !== "Volume"
-      );
+      // Remover apenas a coluna "Volume"
+      const colunas = Object.keys(dados[0]).filter(c => c.trim() !== "Volume");
 
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
