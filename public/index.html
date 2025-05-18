@@ -22,10 +22,10 @@ function verificarLogin() {
 
       const dados = json.dados || json;
 
-      // Lista de colunas a serem ocultadas
-      const colunasOcultas = ["Nome", "Preço", "Volume", "Market Cap"];
+      // Lista de colunas que devem ser ocultadas no painel
+      const colunasOcultas = ["Preço", "Volume", "Market Cap"];
 
-      // Filtra colunas visíveis
+      // Detecta todas as colunas e remove apenas as desnecessárias
       const colunas = Object.keys(dados[0] || {}).filter(c => !colunasOcultas.includes(c));
 
       const dadosFormatados = dados.map(item =>
