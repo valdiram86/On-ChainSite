@@ -22,8 +22,19 @@ function verificarLogin() {
 
       const dados = json.dados || json;
 
-      // Remove apenas a coluna Volume
-      const colunas = Object.keys(dados[0] || {}).filter(c => c !== "Volume");
+      if (!dados || dados.length === 0) {
+        document.getElementById("painel").innerHTML = "<p style='color:red'>Nenhum dado recebido da planilha.</p>";
+        return;
+      }
+
+      // Detectar e mostrar nomes reais das colunas
+      const colunasOriginais = Object.keys(dados[0]);
+      const debugColunas = document.createElement("div");
+      debugColunas.innerHTML = "<p><strong>Colunas detectadas:</strong> " + colunasOriginais.join(", ") + "</p>";
+      document.body.prepend(debugColunas);
+
+      // Filtrar a coluna Volume (nome exato precisa ser confirmado)
+      const colunas = colunasOriginais.filter(c => c.trim() !== "Volume");
 
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
