@@ -122,8 +122,11 @@ function verificarLogin() {
         return;
       }
 
-      // Remover apenas a coluna "Preço"
-      const colunas = Object.keys(dados[0]).filter(c => c.trim().toLowerCase() !== "preço");
+      // Remover Preço, Volume e Market Cap (com variações de caixa e espaços)
+      const colunas = Object.keys(dados[0]).filter(c => {
+        const nome = c.trim().toLowerCase();
+        return nome !== "preço" && nome !== "volume" && nome !== "market cap";
+      });
 
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
