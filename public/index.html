@@ -2,106 +2,70 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Painel On-Chain SetValues</title>
-
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>On-Chain SetValues – Login</title>
   <style>
     body {
-      background-color: black;
-      color: white;
+      background: black;
+      color: lime;
       font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-
-    h2 {
       text-align: center;
-      color: limegreen;
-      margin-bottom: 20px;
+      margin-top: 80px;
     }
-
-    table {
-      width: 100%;
+    input {
+      padding: 10px;
+      width: 260px;
+      margin: 10px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
     }
-
-    th {
-      position: sticky;
-      top: 0;
-      background-color: #111;
+    button {
+      background-color: lime;
+      color: black;
+      padding: 10px 30px;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
     }
-
-    .azul { background-color: #3399ff !important; color: white; }
-    .verde { background-color: #2ecc71 !important; color: black; }
-    .cinza1 { background-color: #444 !important; color: white; }
-    .cinza2 { background-color: #333 !important; color: white; }
-    .cinza3 { background-color: #222 !important; color: white; }
+    h1 {
+      margin-bottom: 40px;
+    }
   </style>
 </head>
 <body>
+  <h1>On-Chain SetValues</h1>
 
-  <h2>Painel On-Chain SetValues</h2>
-  <p style="text-align: center; color: lime;">
-    Entre 1.654 criptos, 90% são ruído.<br>
-    O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br>
-    Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br>
-    Após 24h: R$55 via PIX ou 10 USDT (BEP20)<br>
-    <span style="font-size: 12px;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
-  </p>
-
-  <table id="painel" class="display nowrap" style="width:100%"></table>
-
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <form id="loginForm">
+    <input type="email" id="email" placeholder="Digite seu e-mail" required><br>
+    <input type="text" id="codigo" placeholder="Código recebido por e-mail" required><br>
+    <button type="submit">Entrar</button>
+  </form>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    function getParametro(chave) {
-      const url = new URLSearchParams(window.location.search);
-      return url.get(chave);
-    }
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const codigo = document.getElementById("codigo").value.trim();
 
-    const email = getParametro("email");
-    if (!email) {
-      document.body.innerHTML = "<h3 style='color:red;'>E-mail não informado.</h3>";
-    } else {
-      fetch(`${API_URL}?email=${encodeURIComponent(email)}`)
-        .then(r => r.json())
-        .then(json => {
-          if (json.erro) {
-            document.body.innerHTML = `<h3 style='color:red;'>${json.erro}</h3>`;
-            return;
-          }
+      if (!email || !codigo) {
+        alert("Preencha os dois campos.");
+        return;
+      }
 
-          const dados = json;
-          const colunas = Object.keys(dados[0]);
-          const tabela = dados.map(linha =>
-            colunas.map(col => col === "Link" ? `<a href="${linha[col]}" target="_blank">Ver</a>` : linha[col])
-          );
+      const res = await fetch(`${API_URL}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`);
+      const dados = await res.json();
 
-          $('#painel').DataTable({
-            data: tabela,
-            columns: colunas.map(c => ({ title: c })),
-            scrollX: true,
-            paging: false,
-            info: false,
-            searching: false,
-            createdRow: function(row, data, dataIndex) {
-              const cor = dados[dataIndex].cor;
-              if (cor === "azul") $(row).addClass("azul");
-              else if (cor === "verde") $(row).addClass("verde");
-              else if (cor === "cinza1") $(row).addClass("cinza1");
-              else if (cor === "cinza2") $(row).addClass("cinza2");
-              else if (cor === "cinza3") $(row).addClass("cinza3");
-            },
-            language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
-          });
-        })
-        .catch(() => {
-          document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados.</h3>";
-        });
-    }
+      if (dados.status === "Acesso liberado") {
+        window.location.href = `painel.html?email=${encodeURIComponent(email)}`;
+      } else {
+        alert("Código inválido ou expirado.");
+      }
+    });
   </script>
-
 </body>
 </html>
