@@ -22,11 +22,8 @@ function verificarLogin() {
 
       const dados = json.dados || json;
 
-      // Colunas a remover da visualização no painel
-      const colunasOcultas = ["Preço", "Volume", "Market Cap"];
-
-      // Garante que só as colunas visíveis sejam exibidas
-      const colunas = Object.keys(dados[0] || {}).filter(c => !colunasOcultas.includes(c));
+      // Remove apenas a coluna Volume
+      const colunas = Object.keys(dados[0] || {}).filter(c => c !== "Volume");
 
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
@@ -42,7 +39,7 @@ function verificarLogin() {
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const idx = colunas.indexOf("Pontuação Balan");
+          const idx = colunas.indexOf("Pontuação Balanceada");
           if (idx >= 0) {
             const score = parseFloat(data[idx]);
             if (score >= 600) $(row).addClass('azul');
