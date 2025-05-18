@@ -122,10 +122,10 @@ function verificarLogin() {
         return;
       }
 
-      // Remover Preço, Volume e Market Cap (com variações de caixa e espaços)
+      // Remover Nome, Preço, Volume e Market Cap
       const colunas = Object.keys(dados[0]).filter(c => {
         const nome = c.trim().toLowerCase();
-        return nome !== "preço" && nome !== "volume" && nome !== "market cap";
+        return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
       });
 
       const dadosFormatados = dados.map(item =>
