@@ -122,27 +122,41 @@ function verificarLogin() {
         return;
       }
 
-      // Remover colunas desnecessárias
+      // Remove colunas desnecessárias
       const colunas = Object.keys(dados[0]).filter(c => {
         const nome = c.trim().toLowerCase();
         return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
       });
 
+      // Reordena: símbolo, p balanceada, p anterior, link
+      const prioridade = ["símbolo", "pontuação balanceada", "pontuação anterior"];
+      const fim = ["link"];
+
+      const colunasOrdenadas = [
+        ...colunas.filter(c => prioridade.includes(c.trim().toLowerCase())),
+        ...colunas.filter(c =>
+          !prioridade.includes(c.trim().toLowerCase()) &&
+          !fim.includes(c.trim().toLowerCase())
+        ),
+        ...colunas.filter(c => fim.includes(c.trim().toLowerCase()))
+      ];
+
       const dadosFormatados = dados.map(item =>
-        colunas.map(campo =>
+        colunasOrdenadas.map(campo =>
           campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
         )
       );
 
       $('#painel').DataTable({
         data: dadosFormatados,
-        columns: colunas.map(c => {
-          let titulo = c;
-          const nome = c.trim().toLowerCase();
-          if (nome === "pontuação balanceada") titulo = "P Balanceada";
-          else if (nome === "pontuação anterior") titulo = "P Anterior";
+        columns: colunasOrdenadas.map(c => {
+          let titulo = c.trim();
+          const nome = titulo.toLowerCase();
+          if (nome === "pontuação anterior") titulo = "P Anterior";
+          else if (nome === "pontuação balanceada") titulo = "P Balanceada";
           else if (nome === "pontuação on-chain") titulo = "P On-Chain";
           else if (nome === "tendência consolidada") titulo = "T Consolidada";
+          else if (nome === "símbolo") titulo = "Símbolo";
           return { title: titulo };
         }),
         scrollX: true,
@@ -150,7 +164,7 @@ function verificarLogin() {
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const idx = colunas.findIndex(c => c.trim().toLowerCase() === "pontuação balanceada");
+          const idx = colunasOrdenadas.findIndex(c => c.trim().toLowerCase() === "pontuação balanceada");
           if (idx >= 0) {
             const score = parseFloat(data[idx]);
             if (score >= 600) $(row).addClass('azul');
