@@ -122,7 +122,7 @@ function verificarLogin() {
         return;
       }
 
-      // Remover Nome, Preço, Volume e Market Cap
+      // Remover colunas desnecessárias
       const colunas = Object.keys(dados[0]).filter(c => {
         const nome = c.trim().toLowerCase();
         return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
@@ -136,13 +136,21 @@ function verificarLogin() {
 
       $('#painel').DataTable({
         data: dadosFormatados,
-        columns: colunas.map(c => ({ title: c })),
+        columns: colunas.map(c => {
+          let titulo = c;
+          const nome = c.trim().toLowerCase();
+          if (nome === "pontuação balanceada") titulo = "P Balanceada";
+          else if (nome === "pontuação anterior") titulo = "P Anterior";
+          else if (nome === "pontuação on-chain") titulo = "P On-Chain";
+          else if (nome === "tendência consolidada") titulo = "T Consolidada";
+          return { title: titulo };
+        }),
         scrollX: true,
         paging: false,
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const idx = colunas.indexOf("Pontuação Balanceada");
+          const idx = colunas.findIndex(c => c.trim().toLowerCase() === "pontuação balanceada");
           if (idx >= 0) {
             const score = parseFloat(data[idx]);
             if (score >= 600) $(row).addClass('azul');
