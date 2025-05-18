@@ -1,139 +1,133 @@
-const CMC_API_KEY = '3f2fc20e-1d90-4dbc-86d6-4d1e30ed5024';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>On-Chain SetValues</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <style>
+    body {
+      background-color: black;
+      color: #00ff00;
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
+    h2 {
+      color: #00ff00;
+      text-align: center;
+    }
+    #login {
+      text-align: center;
+      margin-top: 40px;
+    }
+    #emailInput {
+      padding: 10px;
+      width: 260px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+    }
+    #acessarBtn {
+      padding: 10px 20px;
+      background-color: #00ff00;
+      color: black;
+      font-weight: bold;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .azul { background-color: #005577 !important; }
+    .verde { background-color: #003300 !important; }
+    .cinza { background-color: #333333 !important; }
+    .grafite { background-color: #222222 !important; }
+    table.dataTable thead th {
+      position: sticky;
+      top: 0;
+      background-color: #111;
+      z-index: 1;
+      color: #00ff00;
+    }
+    .mensagem {
+      font-size: 15px;
+      text-align: center;
+      margin-top: 20px;
+      color: #00ff00;
+    }
+  </style>
+</head>
+<body>
+  <div id="login">
+    <h2>On-Chain SetValues</h2>
+    <input type="email" id="emailInput" placeholder="Digite seu e-mail autorizado" />
+    <button id="acessarBtn">Acessar</button>
+  </div>
 
-function atualizarTudo() {
-  const dados = obterDadosCMC();
-  preencherPlanilha(dados);
-  aplicarCores();
-  salvarHistorico();
-}
+  <div id="conteudo" style="display:none;">
+    <h2>Painel On-Chain SetValues</h2>
+    <div class="mensagem">
+      Entre 1.654 criptos, 90% são ruído. <br />
+      O <b>On-Chain SetValues</b> remove o ruído e te mostra onde focar. <br />
+      Acesso gratuito 24h: <b>onchainsetvalues@gmail.com</b><br />
+      Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
+      <code>0xbd25d74d441e1b265812814a3f1b791769b6ca44</code>
+    </div>
+    <table id="tabela" class="display" width="100%"></table>
+  </div>
 
-function obterDadosCMC() {
-  const url = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?limit=1700&start=1';
-  const options = {
-    headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY },
-    muteHttpExceptions: true
-  };
-  const resposta = UrlFetchApp.fetch(url, options);
-  const json = JSON.parse(resposta.getContentText());
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script>
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-  const stable = ['USDT', 'USDC', 'BUSD', 'TUSD', 'DAI', 'USDP', 'USDD', 'GUSD', 'LUSD', 'OUSD', 'SUSD', 'FEI', 'HUSD', 'FRAX', 'EUROC', 'USDN', 'ALUSD'];
-  return json.data.filter(c => {
-    const simbolo = c.symbol.toUpperCase();
-    const nome = c.name.toLowerCase();
-    return !stable.includes(simbolo) && !nome.includes('usd') && !nome.includes('stable') && !nome.includes('dollar');
-  });
-}
+    document.getElementById("acessarBtn").onclick = () => {
+      const email = document.getElementById("emailInput").value.trim();
+      if (!email) return alert("Informe um e-mail válido.");
 
-function calcularPontuacaoBruta(c) {
-  const v7 = c.quote.USD.percent_change_7d || 0;
-  const v30 = c.quote.USD.percent_change_30d || 0;
-  const v90 = c.quote.USD.percent_change_90d || 0;
-  return Math.round(Math.max(0, Math.min(700, 100 + v7 * 2 + v30 + v90 * 0.5)));
-}
+      fetch(urlAPI + "?email=" + encodeURIComponent(email))
+        .then(res => res.json())
+        .then(res => {
+          if (!res.autorizado) {
+            alert("E-mail não autorizado.");
+            return;
+          }
 
-function aplicarBalanceamento(score, rank) {
-  let mult = 1;
-  if (rank <= 150) mult = 0.3;
-  else if (rank <= 300) mult = 0.5;
-  else if (rank <= 700) mult = 0.8;
-  return Math.round(score * mult);
-}
+          document.getElementById("login").style.display = "none";
+          document.getElementById("conteudo").style.display = "block";
 
-function preencherPlanilha(dados) {
-  const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("On-ChainSetValues");
-  aba.clearContents();
-  aba.setFrozenRows(1);
-  aba.setFrozenColumns(1);
+          const dados = res.dados;
+          const colunas = Object.keys(dados[0]).filter(c =>
+            !["Preço", "Volume", "Market Cap"].includes(c)
+          );
 
-  const headers = [
-    "Rank", "Nome", "Símbolo", "Preço", "Volume", "Market Cap",
-    "Pontuação On-Chain", "Link", "Pontuação Anterior", "Variação",
-    "Pontuação Balanceada", "Top 3D", "Top 7D", "Top 15D", "Top 30D", "Top 50D", "Tendência Consolidada"
-  ];
-  aba.getRange(1, 1, 1, headers.length).setValues([headers]);
+          const formatado = dados.map(linha =>
+            colunas.map(campo =>
+              campo === "Link"
+                ? `<a href="${linha[campo]}" target="_blank">Ver</a>`
+                : linha[campo]
+            )
+          );
 
-  const linhas = dados.map(c => {
-    const rank = c.cmc_rank;
-    const preco = c.quote.USD.price;
-    const volume = c.quote.USD.volume_24h;
-    const marketcap = c.quote.USD.market_cap;
-    const nome = c.name;
-    const simbolo = c.symbol;
-    const link = `https://coinmarketcap.com/currencies/${c.slug}`;
-    const score = calcularPontuacaoBruta(c);
-    const balanceado = aplicarBalanceamento(score, rank);
-    return [rank, nome, simbolo, preco, volume, marketcap, score, link, "", "", balanceado, "", "", "", "", "", ""];
-  });
-
-  aba.getRange(2, 1, linhas.length, headers.length).setValues(linhas);
-}
-
-function aplicarCores() {
-  const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("On-ChainSetValues");
-  const ult = aba.getLastRow();
-
-  const valores = aba.getRange(2, 11, ult - 1).getValues();
-  const cores = valores.map(([v]) => {
-    if (v >= 600) return ['#3399ff'];
-    if (v >= 500) return ['#00ff00'];
-    if (v >= 300) return ['#ffff00'];
-    if (v >= 250) return ['#ff00ff'];
-    return ['white'];
-  });
-  aba.getRange(2, 11, ult - 1).setBackgrounds(cores);
-}
-
-function salvarHistorico() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const origem = ss.getSheetByName("On-ChainSetValues");
-  const destino = ss.getSheetByName("Historico") || ss.insertSheet("Historico");
-
-  const ultimaLinha = origem.getLastRow();
-  const ultimaColuna = origem.getLastColumn();
-  if (ultimaLinha <= 1) return;
-
-  const dados = origem.getRange(2, 1, ultimaLinha - 1, ultimaColuna).getValues();
-  destino.getRange(destino.getLastRow() + 1, 1, dados.length, ultimaColuna).setValues(dados);
-}
-
-// === API de Verificação de Acesso ===
-function doGet(e) {
-  const email = (e.parameter.email || "").toLowerCase().trim();
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const aba = ss.getSheetByName("Senhas");
-
-  if (!aba) {
-    return ContentService.createTextOutput(JSON.stringify({ autorizado: false, erro: "Aba 'Senhas' não encontrada" }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
-  const lista = aba.getRange(2, 1, aba.getLastRow() - 1, 1)
-                  .getValues()
-                  .flat()
-                  .map(v => (v || "").toLowerCase().trim());
-
-  if (!lista.includes(email)) {
-    return ContentService.createTextOutput(JSON.stringify({ autorizado: false }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
-  const dados = obterDadosComoArrayJson();
-
-  return ContentService.createTextOutput(JSON.stringify({
-    autorizado: true,
-    dados: dados
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-function obterDadosComoArrayJson() {
-  const aba = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("On-ChainSetValues");
-  const valores = aba.getDataRange().getValues();
-  const headers = valores[0];
-  const linhas = valores.slice(1);
-
-  return linhas.map(linha => {
-    const item = {};
-    headers.forEach((h, i) => item[h] = linha[i]);
-    return item;
-  });
-}
+          $('#tabela').DataTable({
+            data: formatado,
+            columns: colunas.map(t => ({ title: t })),
+            paging: false,
+            scrollX: true,
+            order: [[0, 'asc']],
+            createdRow: function(row, data) {
+              const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
+              if (score >= 600) $(row).addClass("azul");
+              else if (score >= 500) $(row).addClass("verde");
+              else if (score >= 300) $(row).addClass("cinza");
+              else if (score >= 250) $(row).addClass("grafite");
+            }
+          });
+        })
+        .catch(err => {
+          alert("Erro ao carregar dados.");
+          console.error(err);
+        });
+    };
+  </script>
+</body>
+</html>
