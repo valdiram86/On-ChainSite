@@ -8,121 +8,95 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #111;
-      color: #eee;
+      background-color: #000;
+      color: #0f0;
       padding: 10px;
     }
-
-    h2, h4 {
+    h2 {
       text-align: center;
       color: #0f0;
-      margin: 10px;
+      margin-bottom: 10px;
     }
-
-    #login {
+    .mensagem {
       text-align: center;
-      margin: 30px 0;
+      color: #0f0;
+      margin-bottom: 10px;
+      font-weight: bold;
     }
-
-    input[type="email"], button {
-      padding: 10px;
-      font-size: 14px;
-      margin: 5px;
-    }
-
     table {
       width: 100%;
-      font-size: 14px;
+      color: #fff;
     }
-
-    .azul { background-color: #3399ff !important; }
-    .verde { background-color: #00ff00 !important; }
-    .amarelo { background-color: #ffff00 !important; }
-    .rosa { background-color: #ff00ff !important; }
-
-    th.sticky {
+    .verde-escuro {
+      background-color: #104910 !important;
+    }
+    thead th {
       position: sticky;
       top: 0;
-      background: #000;
-      z-index: 2;
+      background: #111;
+      z-index: 1;
+    }
+    td:nth-child(1), td:nth-child(2) {
+      white-space: nowrap;
+      padding-right: 15px;
+    }
+    .ver {
+      color: #00f;
     }
   </style>
 </head>
 <body>
-
-  <h4>Entre 1.654 criptos, 90% são ruído.<br>
-  O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br>
-  Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br>
-  Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br>
-  <span style="color:#0f0;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span></h4>
-
-  <div id="login">
-    <input type="email" id="email" placeholder="Digite seu e-mail autorizado" />
-    <button onclick="verificarEmail()">Entrar</button>
-    <p id="erro" style="color:red;"></p>
+  <div class="mensagem">
+    Entre 1.654 criptos, 90% são ruído.<br>
+    O <b>On-Chain SetValues</b> remove o ruído e te mostra onde focar.<br>
+    Acesso gratuito 24h: <b>onchainsetvalues@gmail.com</b><br>
+    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20) <br>
+    <span style="color:#0f0">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span>
   </div>
 
-  <h2 id="painelTitulo" style="display:none;">Painel On-Chain SetValues</h2>
-  <table id="painel" class="display nowrap stripe compact" style="display:none;"></table>
+  <h2>Painel On-Chain SetValues</h2>
+  <table id="painel" class="display nowrap"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-
   <script>
-    function verificarEmail() {
-      const email = document.getElementById("email").value.trim();
-      if (!email) {
-        document.getElementById("erro").innerText = "Digite um e-mail válido.";
-        return;
-      }
+    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-      carregarPainel(email);
-    }
+    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
+      .then(res => res.json())
+      .then(json => {
+        const dados = json.dados || json;
+        const remover = ["Preço", "Volume", "Market Cap"];
+        const colunas = Object.keys(dados[0] || {}).filter(c => !remover.includes(c));
 
-    function carregarPainel(email) {
-      const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+        const dadosFormatados = dados.map(item =>
+          colunas.map(campo =>
+            campo === "Link"
+              ? `<a class="ver" href="${item[campo]}" target="_blank">Ver</a>`
+              : item[campo]
+          )
+        );
 
-      fetch(urlAPI + "?email=" + encodeURIComponent(email))
-        .then(res => res.json())
-        .then(json => {
-          const dados = json.dados || json;
-          const colunas = Object.keys(dados[0] || {});
-          const dadosFormatados = dados.map(item =>
-            colunas.map(campo =>
-              campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
-            )
-          );
-
-          document.getElementById("login").style.display = "none";
-          document.getElementById("painelTitulo").style.display = "block";
-          document.getElementById("painel").style.display = "table";
-
-          $('#painel').DataTable({
-            data: dadosFormatados,
-            columns: colunas.map(c => ({ title: c, className: "sticky" })),
-            scrollX: true,
-            scrollY: "60vh",
-            scrollCollapse: true,
-            paging: false,
-            ordering: true,
-            info: false,
-            searching: false,
-            createdRow: function(row, data) {
-              const idx = colunas.indexOf("Pontuação Balanceada");
-              const score = parseFloat(data[idx]);
-              if (score >= 600) $(row).addClass('azul');
-              else if (score >= 500) $(row).addClass('verde');
-              else if (score >= 300) $(row).addClass('amarelo');
-              else if (score >= 250) $(row).addClass('rosa');
-            },
-            language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
-          });
-        })
-        .catch(() => {
-          document.getElementById("erro").innerText = "Erro ao carregar os dados.";
+        $('#painel').DataTable({
+          data: dadosFormatados,
+          columns: colunas.map(c => ({ title: c })),
+          scrollX: true,
+          paging: false,
+          searching: false,
+          info: false,
+          createdRow: function(row, data) {
+            const idx = colunas.indexOf("Pontuação Balanceada");
+            const score = parseFloat(data[idx]);
+            if (score >= 300 && score < 500) {
+              $(row).addClass("verde-escuro");
+            }
+          },
+          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
         });
-    }
+      })
+      .catch(() => {
+        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
+      });
   </script>
-
 </body>
 </html>
