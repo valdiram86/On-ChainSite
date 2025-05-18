@@ -15,8 +15,19 @@
 
     h2, h4 {
       text-align: center;
-      margin: 10px;
       color: #0f0;
+      margin: 10px;
+    }
+
+    #login {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    input[type="email"], button {
+      padding: 10px;
+      font-size: 14px;
+      margin: 5px;
     }
 
     table {
@@ -29,7 +40,6 @@
     .amarelo { background-color: #ffff00 !important; }
     .rosa { background-color: #ff00ff !important; }
 
-    td:first-child { text-align: center; }
     th.sticky {
       position: sticky;
       top: 0;
@@ -40,56 +50,79 @@
 </head>
 <body>
 
-  <h4>Entre 1.654 criptos, 90% são ruído.<br />
-  O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br />
-  Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br />
-  Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20) 0xbd25d74d441e1b265812814a3f1b791769b6ca44</h4>
+  <h4>Entre 1.654 criptos, 90% são ruído.<br>
+  O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br>
+  Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br>
+  Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br>
+  <span style="color:#0f0;">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span></h4>
 
-  <h2>Painel On-Chain SetValues</h2>
+  <div id="login">
+    <input type="email" id="email" placeholder="Digite seu e-mail autorizado" />
+    <button onclick="verificarEmail()">Entrar</button>
+    <p id="erro" style="color:red;"></p>
+  </div>
 
-  <table id="painel" class="display nowrap stripe compact"></table>
+  <h2 id="painelTitulo" style="display:none;">Painel On-Chain SetValues</h2>
+  <table id="painel" class="display nowrap stripe compact" style="display:none;"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 
   <script>
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    function verificarEmail() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        document.getElementById("erro").innerText = "Digite um e-mail válido.";
+        return;
+      }
 
-    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
-      .then(res => res.json())
-      .then(json => {
-        const dados = json.dados || json;
-        const colunas = Object.keys(dados[0] || {});
+      carregarPainel(email);
+    }
 
-        const dadosFormatados = dados.map(item =>
-          colunas.map(campo =>
-            campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
-          )
-        );
+    function carregarPainel(email) {
+      const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-        $('#painel').DataTable({
-          data: dadosFormatados,
-          columns: colunas.map(c => ({ title: c, className: "sticky" })),
-          scrollX: true,
-          scrollY: "60vh",
-          scrollCollapse: true,
-          paging: false,
-          ordering: true,
-          info: false,
-          searching: false,
-          createdRow: function(row, data) {
-            const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
-            if (score >= 600) $(row).addClass('azul');
-            else if (score >= 500) $(row).addClass('verde');
-            else if (score >= 300) $(row).addClass('amarelo');
-            else if (score >= 250) $(row).addClass('rosa');
-          },
-          language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+      fetch(urlAPI + "?email=" + encodeURIComponent(email))
+        .then(res => res.json())
+        .then(json => {
+          const dados = json.dados || json;
+          const colunas = Object.keys(dados[0] || {});
+          const dadosFormatados = dados.map(item =>
+            colunas.map(campo =>
+              campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
+            )
+          );
+
+          document.getElementById("login").style.display = "none";
+          document.getElementById("painelTitulo").style.display = "block";
+          document.getElementById("painel").style.display = "table";
+
+          $('#painel').DataTable({
+            data: dadosFormatados,
+            columns: colunas.map(c => ({ title: c, className: "sticky" })),
+            scrollX: true,
+            scrollY: "60vh",
+            scrollCollapse: true,
+            paging: false,
+            ordering: true,
+            info: false,
+            searching: false,
+            createdRow: function(row, data) {
+              const idx = colunas.indexOf("Pontuação Balanceada");
+              const score = parseFloat(data[idx]);
+              if (score >= 600) $(row).addClass('azul');
+              else if (score >= 500) $(row).addClass('verde');
+              else if (score >= 300) $(row).addClass('amarelo');
+              else if (score >= 250) $(row).addClass('rosa');
+            },
+            language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
+          });
+        })
+        .catch(() => {
+          document.getElementById("erro").innerText = "Erro ao carregar os dados.";
         });
-      })
-      .catch(() => {
-        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
-      });
+    }
   </script>
+
 </body>
 </html>
