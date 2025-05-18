@@ -9,13 +9,18 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #FFFFFF; /* fundo branco */
-      color: #000000;       /* texto preto */
+      background: #FFFFFF;
+      color: #000000;
       margin: 0;
       padding: 0;
+      padding-top: 120px; /* espaço reservado para o cabeçalho fixo */
     }
 
     header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 999;
       background: #FFFFFF;
       padding: 15px;
       text-align: center;
@@ -26,7 +31,7 @@
 
     .painel {
       padding: 15px;
-      display: block; /* visível para teste */
+      display: block;
       color: #000000;
     }
 
