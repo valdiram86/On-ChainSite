@@ -22,14 +22,12 @@ function verificarLogin() {
 
       const dados = json.dados || json;
 
-      // Colunas que devem ser exibidas
-      const colunasDesejadas = [
-        "Símbolo", "Ranking", "Link",
-        "Pontuação Balanceada", "Potencial", "Variação", "Score Final",
-        "Auditada?", "Engajamento", "Hype", "Supply"
-      ];
+      // Lista de colunas a serem ocultadas
+      const colunasOcultas = ["Nome", "Preço", "Volume", "Market Cap"];
 
-      const colunas = Object.keys(dados[0] || {}).filter(c => colunasDesejadas.includes(c));
+      // Filtra colunas visíveis
+      const colunas = Object.keys(dados[0] || {}).filter(c => !colunasOcultas.includes(c));
+
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
           campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
@@ -44,11 +42,14 @@ function verificarLogin() {
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
-          if (score >= 600) $(row).addClass('azul');
-          else if (score >= 500) $(row).addClass('verde');
-          else if (score >= 300) $(row).addClass('amarelo');
-          else if (score >= 250) $(row).addClass('rosa');
+          const idx = colunas.indexOf("Pontuação Balanceada");
+          if (idx >= 0) {
+            const score = parseFloat(data[idx]);
+            if (score >= 600) $(row).addClass('azul');
+            else if (score >= 500) $(row).addClass('verde');
+            else if (score >= 300) $(row).addClass('amarelo');
+            else if (score >= 250) $(row).addClass('rosa');
+          }
         },
         language: {
           url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
