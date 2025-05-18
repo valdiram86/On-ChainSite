@@ -9,7 +9,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f0f0f0; /* fundo cinza claro */
+      background: #f0f0f0;
       color: #000000;
       margin: 0;
       padding: 0;
@@ -122,8 +122,8 @@ function verificarLogin() {
         return;
       }
 
-      const colunas = Object.keys(dados[0]);
-      console.log("Colunas detectadas:", colunas);
+      // Remover apenas a coluna "Preço"
+      const colunas = Object.keys(dados[0]).filter(c => c.trim() !== "Preço");
 
       const dadosFormatados = dados.map(item =>
         colunas.map(campo =>
