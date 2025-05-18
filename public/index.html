@@ -1,133 +1,109 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>On-Chain SetValues</title>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
   <style>
     body {
       background-color: black;
-      color: #00ff00;
+      color: white;
       font-family: Arial, sans-serif;
-      padding: 10px;
+      text-align: center;
+      padding: 40px;
     }
+
     h2 {
-      color: #00ff00;
-      text-align: center;
+      color: limegreen;
     }
-    #login {
-      text-align: center;
-      margin-top: 40px;
-    }
-    #emailInput {
+
+    input {
       padding: 10px;
-      width: 260px;
+      margin: 5px;
+      width: 250px;
       border-radius: 5px;
       border: none;
       font-size: 16px;
     }
-    #acessarBtn {
+
+    button {
       padding: 10px 20px;
-      background-color: #00ff00;
+      margin: 5px;
+      background-color: limegreen;
       color: black;
-      font-weight: bold;
       border: none;
       border-radius: 5px;
+      font-weight: bold;
       cursor: pointer;
-      margin-left: 10px;
     }
-    .azul { background-color: #005577 !important; }
-    .verde { background-color: #003300 !important; }
-    .cinza { background-color: #333333 !important; }
-    .grafite { background-color: #222222 !important; }
-    table.dataTable thead th {
-      position: sticky;
-      top: 0;
-      background-color: #111;
-      z-index: 1;
-      color: #00ff00;
-    }
-    .mensagem {
-      font-size: 15px;
-      text-align: center;
-      margin-top: 20px;
-      color: #00ff00;
+
+    #mensagem {
+      margin-top: 15px;
+      font-size: 14px;
+      color: red;
     }
   </style>
 </head>
 <body>
+
+  <h2>On-Chain SetValues</h2>
+
   <div id="login">
-    <h2>On-Chain SetValues</h2>
-    <input type="email" id="emailInput" placeholder="Digite seu e-mail autorizado" />
-    <button id="acessarBtn">Acessar</button>
+    <input type="email" id="email" placeholder="Seu e-mail autorizado" /><br>
+    <button onclick="enviarCodigo()">Enviar código</button><br><br>
+    <input type="text" id="codigo" placeholder="Digite o código recebido" /><br>
+    <button onclick="verificarCodigo()">Entrar</button>
+    <p id="mensagem"></p>
   </div>
 
-  <div id="conteudo" style="display:none;">
-    <h2>Painel On-Chain SetValues</h2>
-    <div class="mensagem">
-      Entre 1.654 criptos, 90% são ruído. <br />
-      O <b>On-Chain SetValues</b> remove o ruído e te mostra onde focar. <br />
-      Acesso gratuito 24h: <b>onchainsetvalues@gmail.com</b><br />
-      Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20)<br />
-      <code>0xbd25d74d441e1b265812814a3f1b791769b6ca44</code>
-    </div>
-    <table id="tabela" class="display" width="100%"></table>
-  </div>
-
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script>
-    const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    document.getElementById("acessarBtn").onclick = () => {
-      const email = document.getElementById("emailInput").value.trim();
-      if (!email) return alert("Informe um e-mail válido.");
+    function enviarCodigo() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        document.getElementById("mensagem").textContent = "Informe seu e-mail.";
+        return;
+      }
 
-      fetch(urlAPI + "?email=" + encodeURIComponent(email))
-        .then(res => res.json())
+      fetch(`${API_URL}?acao=enviar&email=${encodeURIComponent(email)}`)
+        .then(r => r.json())
         .then(res => {
-          if (!res.autorizado) {
-            alert("E-mail não autorizado.");
-            return;
+          if (res.erro) {
+            document.getElementById("mensagem").textContent = res.erro;
+          } else {
+            document.getElementById("mensagem").style.color = "limegreen";
+            document.getElementById("mensagem").textContent = res.status;
           }
-
-          document.getElementById("login").style.display = "none";
-          document.getElementById("conteudo").style.display = "block";
-
-          const dados = res.dados;
-          const colunas = Object.keys(dados[0]).filter(c =>
-            !["Preço", "Volume", "Market Cap"].includes(c)
-          );
-
-          const formatado = dados.map(linha =>
-            colunas.map(campo =>
-              campo === "Link"
-                ? `<a href="${linha[campo]}" target="_blank">Ver</a>`
-                : linha[campo]
-            )
-          );
-
-          $('#tabela').DataTable({
-            data: formatado,
-            columns: colunas.map(t => ({ title: t })),
-            paging: false,
-            scrollX: true,
-            order: [[0, 'asc']],
-            createdRow: function(row, data) {
-              const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
-              if (score >= 600) $(row).addClass("azul");
-              else if (score >= 500) $(row).addClass("verde");
-              else if (score >= 300) $(row).addClass("cinza");
-              else if (score >= 250) $(row).addClass("grafite");
-            }
-          });
         })
-        .catch(err => {
-          alert("Erro ao carregar dados.");
-          console.error(err);
+        .catch(() => {
+          document.getElementById("mensagem").textContent = "Erro ao enviar o código.";
         });
-    };
+    }
+
+    function verificarCodigo() {
+      const email = document.getElementById("email").value.trim();
+      const codigo = document.getElementById("codigo").value.trim();
+
+      if (!email || !codigo) {
+        document.getElementById("mensagem").textContent = "Preencha e-mail e código.";
+        return;
+      }
+
+      fetch(`${API_URL}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`)
+        .then(r => r.json())
+        .then(res => {
+          if (res.erro) {
+            document.getElementById("mensagem").textContent = res.erro;
+          } else {
+            window.location.href = `painel.html?email=${encodeURIComponent(email)}`;
+          }
+        })
+        .catch(() => {
+          document.getElementById("mensagem").textContent = "Erro ao verificar código.";
+        });
+    }
   </script>
+
 </body>
 </html>
