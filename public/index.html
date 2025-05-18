@@ -11,145 +11,92 @@
       background: #000;
       color: #0f0;
       margin: 0;
-      padding: 10px;
+      padding: 20px;
     }
-
-    h2 {
-      text-align: center;
-      color: #00ff00;
-      margin-top: 10px;
-    }
-
-    .mensagem {
-      text-align: center;
-      font-size: 14px;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-
-    #painel_wrapper {
-      margin-top: 10px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
     }
-
-    table.dataTable thead th {
+    thead th {
       position: sticky;
       top: 0;
-      background: #111;
-      color: #fff;
-      white-space: nowrap;
+      background-color: #111;
     }
-
-    .azul   { background-color: #004b91 !important; }
-    .verde  { background-color: #003300 !important; }
-    .cinza  { background-color: #444444 !important; }
-    .cinza2 { background-color: #2c2c2c !important; }
-
-    .login {
+    .azul { background-color: #003344 !important; }
+    .verde { background-color: #2e2b01 !important; }
+    .cinza1 { background-color: #555 !important; }
+    .cinza2 { background-color: #333 !important; }
+    h2 {
       text-align: center;
-      margin-bottom: 20px;
+      color: lime;
     }
-
-    .login input {
-      padding: 8px;
-      width: 230px;
-      max-width: 90%;
-      margin-right: 10px;
-      border: 1px solid #0f0;
-      background: #111;
-      color: #0f0;
-    }
-
-    .login button {
-      padding: 8px 15px;
-      background: #0f0;
-      color: #000;
-      border: none;
-      cursor: pointer;
-    }
-
-    @media screen and (max-width: 600px) {
-      .login input {
-        display: block;
-        margin: 5px auto;
-      }
-
-      .login button {
-        display: block;
-        margin: 5px auto;
-      }
+    .cabecalho {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
+  <div class="cabecalho">
+    <p><strong>Entre 1.654 criptos, 90% são ruído.</strong><br>
+    O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.<br>
+    Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong><br>
+    Após 24h: R$55 via PIX (chave e-mail) ou 10 USDT (BEP20):<br>
+    <span style="color: #00ff00">0xbd25d74d441e1b265812814a3f1b791769b6ca44</span></p>
+  </div>
+
   <h2>Painel On-Chain SetValues</h2>
-
-  <div class="mensagem">
-    Entre 1.654 criptos, 90% são ruído.<br>
-    O <b>On-Chain SetValues</b> remove o ruído e te mostra onde focar.<br>
-    Acesso gratuito 24h: <b>onchainsetvalues@gmail.com</b><br>
-    Após 24h: R$55 via PIX ou 10 USDT (BEP20)<br>
-    <code>0xbd25d74d441e1b265812814a3f1b791769b6ca44</code>
-  </div>
-
-  <div class="login">
-    <input type="email" id="email" placeholder="Digite seu e-mail autorizado" />
-    <button onclick="carregarPainel()">Acessar</button>
-  </div>
-
-  <table id="painel" class="display nowrap" style="display:none;"></table>
+  <table id="painel" class="display nowrap"></table>
 
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
   <script>
-    function carregarPainel() {
-      const email = document.getElementById("email").value.trim();
-      if (!email.includes("@")) return alert("Informe um e-mail válido.");
+    const urlAPI = "https://script.google.com/macros/s/AKfycbzASa44mjERtZvjBCsv_pxpKAJbv8tp_rOmpPdNHUWWk1CVSFKSSOpM-LuYPzJ5PJQn/exec";
 
-      const url = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec?email=" + encodeURIComponent(email);
+    fetch(urlAPI + "?email=valdiram.lima.2013@gmail.com")
+      .then(res => res.json())
+      .then(json => {
+        const dados = json.dados || json;
 
-      fetch(url)
-        .then(res => res.json())
-        .then(json => {
-          const dados = json.dados || [];
-          if (!dados.length) return alert("Sem dados ou e-mail não autorizado.");
+        const colunasDesejadas = [
+          "Rank", "Nome", "Símbolo", "Pontuação On-Chain", "Link", "Pontuação Balanceada"
+        ];
 
-          const colunasDesejadas = ["Rank", "Nome", "Símbolo", "Pontuação On-Chain", "Link", "Pontuação Balanceada"];
-          const colunas = colunasDesejadas.map(c => ({ title: c }));
-          const dadosFormatados = dados.map(item =>
-            colunasDesejadas.map(campo =>
-              campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
-            )
-          );
+        const colunasFinal = [
+          "Rank", "Nome (Símbolo)", "Pontuação On-Chain", "Link", "Pontuação Balanceada"
+        ];
 
-          const tabela = $('#painel').DataTable({
-            destroy: true,
-            data: dadosFormatados,
-            columns: colunas,
-            scrollX: true,
-            paging: false,
-            searching: false,
-            info: false,
-            createdRow: function(row, data) {
-              const score = parseFloat(data[colunasDesejadas.indexOf("Pontuação Balanceada")]);
-              if (score >= 600) $(row).addClass('azul');
-              else if (score >= 500) $(row).addClass('verde');
-              else if (score >= 300) $(row).addClass('cinza');
-              else if (score >= 250) $(row).addClass('cinza2');
-            },
-            language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
-          });
+        const dadosFormatados = dados.map(item => [
+          item["Rank"],
+          `${item["Nome"]} (${item["Símbolo"]})`,
+          item["Pontuação On-Chain"],
+          `<a href="${item["Link"]}" target="_blank">Ver</a>`,
+          item["Pontuação Balanceada"]
+        ]);
 
-          document.getElementById("painel").style.display = "table";
-        })
-        .catch(() => {
-          alert("Erro ao carregar dados.");
+        $('#painel').DataTable({
+          data: dadosFormatados,
+          columns: colunasFinal.map(c => ({ title: c })),
+          scrollX: true,
+          paging: false,
+          searching: false,
+          info: false,
+          createdRow: function(row, data) {
+            const score = parseFloat(data[colunasFinal.indexOf("Pontuação Balanceada")]);
+            if (score >= 600) $(row).addClass('azul');
+            else if (score >= 500) $(row).addClass('verde');
+            else if (score >= 300) $(row).addClass('cinza1');
+            else if (score >= 250) $(row).addClass('cinza2');
+          },
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          }
         });
-    }
+      })
+      .catch(() => {
+        document.body.innerHTML = "<h3 style='color:red;'>Erro ao carregar dados da API.</h3>";
+      });
   </script>
 </body>
 </html>
