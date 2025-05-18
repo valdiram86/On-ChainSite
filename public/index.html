@@ -2,81 +2,102 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>On-Chain SetValues – Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Painel On-Chain SetValues</title>
+
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
     body {
-      background: black;
-      color: lime;
+      background-color: black;
+      color: white;
       font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h2 {
       text-align: center;
-      padding-top: 80px;
+      color: limegreen;
+      margin-bottom: 20px;
     }
-    input {
-      padding: 10px;
-      width: 250px;
-      margin: 10px;
-      font-size: 16px;
-      border-radius: 5px;
-      border: none;
-    }
-    button {
-      padding: 10px 25px;
-      font-size: 15px;
-      font-weight: bold;
-      border: none;
-      border-radius: 5px;
-      margin: 5px;
-      cursor: pointer;
-    }
-    #btnEnviar {
-      background-color: #444;
+
+    th {
+      position: sticky;
+      top: 0;
+      background-color: #111;
       color: white;
     }
-    #btnEntrar {
-      background-color: lime;
-      color: black;
-    }
+
+    .azul { background-color: #3399ff !important; color: white; }
+    .verde { background-color: #00ff00 !important; color: black; }
+    .amarelo { background-color: #cccc00 !important; color: black; }
+    .rosa { background-color: #ff00ff !important; color: white; }
   </style>
 </head>
 <body>
-  <h1>On-Chain SetValues</h1>
 
-  <input type="email" id="email" placeholder="Digite seu e-mail" required><br>
-  <button id="btnEnviar">Enviar Código</button><br>
-  <input type="text" id="codigo" placeholder="Código recebido" required><br>
-  <button id="btnEntrar">Entrar</button>
+  <h2>Painel On-Chain SetValues</h2>
+  <table id="tabela" class="display nowrap" style="width:100%"></table>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    document.getElementById("btnEnviar").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      if (!email) return alert("Informe seu e-mail.");
+    function getEmailURL() {
+      const url = new URLSearchParams(window.location.search);
+      return url.get("email") || "";
+    }
 
-      const res = await fetch(`${API_URL}?acao=enviar&email=${encodeURIComponent(email)}`);
-      const json = await res.json();
-      if (json.status) {
-        alert("Código enviado ao seu e-mail.");
-      } else {
-        alert(json.erro || "Erro ao enviar o código.");
-      }
-    });
+    fetch(`${API_URL}?email=${encodeURIComponent(getEmailURL())}`)
+      .then(res => res.json())
+      .then(json => {
+        if (json.erro) {
+          document.body.innerHTML = `<h3 style="color:red;">${json.erro}</h3>`;
+          return;
+        }
 
-    document.getElementById("btnEntrar").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const codigo = document.getElementById("codigo").value.trim();
-      if (!email || !codigo) return alert("Preencha e-mail e código.");
+        const dados = json;
+        const colunas = Object.keys(dados[0]);
+        const remover = ["Volume", "Market Cap"];
+        const colunasFiltradas = colunas.filter(c => !remover.includes(c));
 
-      const res = await fetch(`${API_URL}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`);
-      const json = await res.json();
+        const dadosFormatados = dados.map(linha =>
+          colunasFiltradas.map(campo => campo === "Link"
+            ? `<a href="${linha[campo]}" target="_blank">Ver</a>`
+            : linha[campo])
+        );
 
-      if (json.status === "Acesso liberado") {
-        window.location.href = `painel.html?email=${encodeURIComponent(email)}`;
-      } else {
-        alert(json.erro || "Código inválido ou expirado.");
-      }
-    });
+        $('#tabela').DataTable({
+          data: dadosFormatados,
+          columns: colunasFiltradas.map(c => ({ title: c })),
+          scrollX: true,
+          paging: false,
+          dom: 'Bfrtip',
+          buttons: ['csv', 'pdf'],
+          createdRow: function(row, data, dataIndex) {
+            const cor = dados[dataIndex].cor;
+            if (cor === "azul") $(row).addClass("azul");
+            else if (cor === "verde") $(row).addClass("verde");
+            else if (cor === "amarelo") $(row).addClass("amarelo");
+            else if (cor === "rosa") $(row).addClass("rosa");
+          },
+          language: {
+            url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+          }
+        });
+      })
+      .catch(() => {
+        document.body.innerHTML = `<h3 style="color:red;">Erro ao carregar dados da API.</h3>`;
+      });
   </script>
+
 </body>
 </html>
