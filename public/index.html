@@ -10,60 +10,71 @@
       color: lime;
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 80px;
+      padding-top: 80px;
     }
     input {
       padding: 10px;
-      width: 260px;
+      width: 250px;
       margin: 10px;
       font-size: 16px;
       border-radius: 5px;
       border: none;
     }
     button {
-      background-color: lime;
-      color: black;
-      padding: 10px 30px;
+      padding: 10px 25px;
+      font-size: 15px;
       font-weight: bold;
       border: none;
       border-radius: 5px;
-      font-size: 16px;
+      margin: 5px;
       cursor: pointer;
     }
-    h1 {
-      margin-bottom: 40px;
+    #btnEnviar {
+      background-color: #444;
+      color: white;
+    }
+    #btnEntrar {
+      background-color: lime;
+      color: black;
     }
   </style>
 </head>
 <body>
   <h1>On-Chain SetValues</h1>
 
-  <form id="loginForm">
-    <input type="email" id="email" placeholder="Digite seu e-mail" required><br>
-    <input type="text" id="codigo" placeholder="Código recebido por e-mail" required><br>
-    <button type="submit">Entrar</button>
-  </form>
+  <input type="email" id="email" placeholder="Digite seu e-mail" required><br>
+  <button id="btnEnviar">Enviar Código</button><br>
+  <input type="text" id="codigo" placeholder="Código recebido" required><br>
+  <button id="btnEntrar">Entrar</button>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-    document.getElementById("loginForm").addEventListener("submit", async function(e) {
-      e.preventDefault();
+    document.getElementById("btnEnviar").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return alert("Informe seu e-mail.");
+
+      const res = await fetch(`${API_URL}?acao=enviar&email=${encodeURIComponent(email)}`);
+      const json = await res.json();
+      if (json.status) {
+        alert("Código enviado ao seu e-mail.");
+      } else {
+        alert(json.erro || "Erro ao enviar o código.");
+      }
+    });
+
+    document.getElementById("btnEntrar").addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
       const codigo = document.getElementById("codigo").value.trim();
-
-      if (!email || !codigo) {
-        alert("Preencha os dois campos.");
-        return;
-      }
+      if (!email || !codigo) return alert("Preencha e-mail e código.");
 
       const res = await fetch(`${API_URL}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`);
-      const dados = await res.json();
+      const json = await res.json();
 
-      if (dados.status === "Acesso liberado") {
+      if (json.status === "Acesso liberado") {
         window.location.href = `painel.html?email=${encodeURIComponent(email)}`;
       } else {
-        alert("Código inválido ou expirado.");
+        alert(json.erro || "Código inválido ou expirado.");
       }
     });
   </script>
