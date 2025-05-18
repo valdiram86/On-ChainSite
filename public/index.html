@@ -122,28 +122,34 @@ function verificarLogin() {
         return;
       }
 
-      // Remove colunas desnecessárias
+      // Remover colunas desnecessárias
       const colunas = Object.keys(dados[0]).filter(c => {
         const nome = c.trim().toLowerCase();
         return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
       });
 
-      // Reordena: símbolo, p balanceada, p anterior, link
-      const prioridade = ["símbolo", "pontuação balanceada", "pontuação anterior"];
-      const fim = ["link"];
+      // Ordem desejada:
+      const prioridade = [
+        "símbolo",
+        "ranking",
+        "link",
+        "pontuação on-chain",
+        "pontuação balanceada",
+        "pontuação anterior"
+      ];
 
       const colunasOrdenadas = [
         ...colunas.filter(c => prioridade.includes(c.trim().toLowerCase())),
         ...colunas.filter(c =>
-          !prioridade.includes(c.trim().toLowerCase()) &&
-          !fim.includes(c.trim().toLowerCase())
-        ),
-        ...colunas.filter(c => fim.includes(c.trim().toLowerCase()))
+          !prioridade.includes(c.trim().toLowerCase())
+        )
       ];
 
       const dadosFormatados = dados.map(item =>
         colunasOrdenadas.map(campo =>
-          campo === "Link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
+          campo.toLowerCase() === "link"
+            ? `<a href="${item[campo]}" target="_blank">Ver</a>`
+            : item[campo]
         )
       );
 
@@ -157,6 +163,8 @@ function verificarLogin() {
           else if (nome === "pontuação on-chain") titulo = "P On-Chain";
           else if (nome === "tendência consolidada") titulo = "T Consolidada";
           else if (nome === "símbolo") titulo = "Símbolo";
+          else if (nome === "ranking") titulo = "Ranking";
+          else if (nome === "link") titulo = "Link";
           return { title: titulo };
         }),
         scrollX: true,
