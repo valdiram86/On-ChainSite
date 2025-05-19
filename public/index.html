@@ -5,14 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>On-Chain SetValues</title>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
-  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f0f0f0;
       color: #000000;
       margin: 0;
-      padding: 0;
       padding-top: 120px;
     }
 
@@ -22,172 +20,166 @@
       width: 100%;
       z-index: 999;
       background: #FFFFFF;
-      padding: 15px;
       text-align: center;
-      font-size: 14px;
-      color: #000000;
+      padding: 15px;
       border-bottom: 1px solid #ccc;
     }
 
-    .painel {
-      padding: 15px;
-      display: block;
-      color: #000000;
-    }
-
-    #login {
-      padding: 15px;
-      text-align: center;
+    .painel, #login {
+      padding: 20px;
     }
 
     input, button {
-      padding: 6px 10px;
-      margin: 3px;
+      padding: 8px;
+      margin: 5px;
       font-size: 14px;
-    }
-
-    table {
-      width: 100%;
     }
 
     .azul {
       background-color: #3399ff !important;
     }
-
     .verde {
       background-color: #4D4D4D !important;
-      color: #fff !important;
+      color: white !important;
     }
-
     .amarelo {
       background-color: #A05200 !important;
-      color: #fff !important;
+      color: white !important;
     }
-
     .rosa {
       background-color: #C9A9FF !important;
-      color: #000 !important;
+      color: black !important;
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div><strong style="color:#000000">Entre 1.900 criptos, 90% são ruído.</strong></div>
-  <div style="color:#000000">O <strong>On-Chain SetValues</strong> remove o ruído e te mostra onde focar.</div>
-  <div style="color:#000000">Acesso gratuito 24h: <strong>onchainsetvalues@gmail.com</strong></div>
-  <div style="color:#000000">Após 24h: R$55 via PIX ou 10 USDT (BEP20) 0xbd25d74d441e1b265812814a3f1b791769b6ca44</div>
+  <div><strong>On-Chain SetValues</strong></div>
+  <div>Acesso gratuito: <strong>onchainsetvalues@gmail.com</strong></div>
 </header>
 
 <div id="login">
-  <input type="email" id="email" placeholder="Seu e-mail" />
-  <input type="text" id="codigo" placeholder="Código" />
-  <button onclick="verificarLogin()">Entrar</button>
-  <p id="erro" style="color:red;"></p>
+  <input type="email" id="email" placeholder="Seu e-mail autorizado" /><br>
+  <button onclick="enviarCodigo()">Enviar código</button><br><br>
+
+  <input type="text" id="codigo" placeholder="Digite o código recebido" /><br>
+  <button onclick="verificarCodigo()">Entrar com E-mail</button><br><br>
+
+  <input type="text" id="hash" placeholder="Ou informe o HASH de transação" /><br>
+  <button onclick="verificarHash()">Entrar com Hash</button><br>
+
+  <p id="mensagem" style="color:red;"></p>
 </div>
 
-<div class="painel">
-  <table id="painel" class="display nowrap"></table>
+<div class="painel" style="display:none;">
+  <table id="painel" class="display nowrap" style="width:100%;"></table>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 
 <script>
-const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyKT8FfZ3Cle5EN7QfoTt58a6gngUC3jhLc6pyWZHN8LM5yfOUGpxyUCLVVGjEVuov8/exec";
 
-function verificarLogin() {
+function enviarCodigo() {
+  const email = document.getElementById("email").value.trim();
+  if (!email) return alert("Informe seu e-mail.");
+
+  fetch(`${API_URL}?acao=enviar&email=${encodeURIComponent(email)}`)
+    .then(res => res.json())
+    .then(json => {
+      document.getElementById("mensagem").style.color = json.erro ? "red" : "green";
+      document.getElementById("mensagem").textContent = json.erro || json.status;
+    })
+    .catch(() => {
+      document.getElementById("mensagem").textContent = "Erro ao enviar o código.";
+    });
+}
+
+function verificarCodigo() {
   const email = document.getElementById("email").value.trim();
   const codigo = document.getElementById("codigo").value.trim();
-  if (!email || !codigo) {
-    document.getElementById("erro").innerText = "Preencha e-mail e código.";
+  if (!email || !codigo) return alert("Preencha e-mail e código.");
+
+  fetch(`${API_URL}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`)
+    .then(res => res.json())
+    .then(renderPainel)
+    .catch(() => document.getElementById("mensagem").textContent = "Erro na verificação.");
+}
+
+function verificarHash() {
+  const hash = document.getElementById("hash").value.trim();
+  if (!hash) return alert("Informe o hash.");
+
+  fetch(`${API_URL}?acao=verificar&hash=${encodeURIComponent(hash)}`)
+    .then(res => res.json())
+    .then(renderPainel)
+    .catch(() => document.getElementById("mensagem").textContent = "Erro na verificação.");
+}
+
+function renderPainel(json) {
+  if (json.erro) {
+    document.getElementById("mensagem").textContent = json.erro;
     return;
   }
 
-  fetch(`${urlAPI}?email=${email}&codigo=${codigo}`)
-    .then(res => res.json())
-    .then(json => {
-      if (json.erro) {
-        document.getElementById("erro").innerText = json.erro;
-        return;
-      }
+  const dados = json.dados || json;
+  if (!dados || !dados.length) {
+    document.getElementById("mensagem").textContent = "Nenhum dado retornado.";
+    return;
+  }
 
-      document.getElementById("login").style.display = "none";
-      document.querySelector(".painel").style.display = "block";
+  document.getElementById("login").style.display = "none";
+  document.querySelector(".painel").style.display = "block";
 
-      const dados = json.dados || json;
+  const colunas = Object.keys(dados[0]).filter(c => {
+    const nome = c.toLowerCase();
+    return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
+  });
 
-      if (!dados || dados.length === 0) {
-        document.getElementById("painel").innerHTML = "<p style='color:red'>Nenhum dado retornado.</p>";
-        return;
-      }
+  const ordem = ["símbolo", "ranking", "link", "pontuação on-chain", "pontuação balanceada", "pontuação anterior"];
+  const colunasOrdenadas = [...ordem, ...colunas.filter(c => !ordem.includes(c.toLowerCase()))];
 
-      const colunas = Object.keys(dados[0]).filter(c => {
-        const nome = c.trim().toLowerCase();
-        return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
-      });
+  const dadosFormatados = dados.map(item =>
+    colunasOrdenadas.map(c =>
+      c.toLowerCase() === "link"
+        ? `<a href="${item[c]}" target="_blank">Ver</a>`
+        : item[c]
+    )
+  );
 
-      const prioridade = [
-        "símbolo",
-        "ranking",
-        "link",
-        "pontuação on-chain",
-        "pontuação balanceada",
-        "pontuação anterior"
-      ];
+  $('#painel').DataTable({
+    data: dadosFormatados,
+    columns: colunasOrdenadas.map(c => ({ title: formatarTitulo(c) })),
+    scrollX: true,
+    paging: false,
+    searching: false,
+    info: false,
+    createdRow: function(row, data) {
+      const idx = colunasOrdenadas.findIndex(c => c.toLowerCase().includes("balanceada"));
+      const score = parseFloat(data[idx]);
+      if (score >= 600) $(row).addClass('azul');
+      else if (score >= 500) $(row).addClass('verde');
+      else if (score >= 300) $(row).addClass('amarelo');
+      else if (score >= 250) $(row).addClass('rosa');
+    },
+    language: {
+      url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
+    }
+  });
+}
 
-      const colunasOrdenadas = [
-        ...colunas.filter(c => prioridade.includes(c.trim().toLowerCase())),
-        ...colunas.filter(c =>
-          !prioridade.includes(c.trim().toLowerCase())
-        )
-      ];
-
-      const dadosFormatados = dados.map(item =>
-        colunasOrdenadas.map(campo =>
-          campo.toLowerCase() === "link"
-            ? `<a href="${item[campo]}" target="_blank">Ver</a>`
-            : item[campo]
-        )
-      );
-
-      $('#painel').DataTable({
-        data: dadosFormatados,
-        columns: colunasOrdenadas.map(c => {
-          let titulo = c.trim();
-          const nome = titulo.toLowerCase();
-          if (nome === "pontuação anterior") titulo = "P Anterior";
-          else if (nome === "pontuação balanceada") titulo = "P Balanceada";
-          else if (nome === "pontuação on-chain") titulo = "P On-Chain";
-          else if (nome === "tendência consolidada") titulo = "T Consolidada";
-          else if (nome === "símbolo") titulo = "Símbolo";
-          else if (nome === "ranking") titulo = "Ranking";
-          else if (nome === "link") titulo = "Link";
-          return { title: titulo };
-        }),
-        scrollX: true,
-        paging: false,
-        searching: false,
-        info: false,
-        createdRow: function(row, data) {
-          const idx = colunasOrdenadas.findIndex(c => c.trim().toLowerCase() === "pontuação balanceada");
-          if (idx >= 0) {
-            const score = parseFloat(data[idx]);
-            if (score >= 600) $(row).addClass('azul');
-            else if (score >= 500) $(row).addClass('verde');
-            else if (score >= 300) $(row).addClass('amarelo');
-            else if (score >= 250) $(row).addClass('rosa');
-          }
-        },
-        language: {
-          url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-        }
-      });
-    })
-    .catch((erro) => {
-      console.error("Erro ao buscar API:", erro);
-      document.getElementById("erro").innerText = "Erro ao carregar dados.";
-    });
+function formatarTitulo(c) {
+  const nome = c.toLowerCase();
+  if (nome === "pontuação balanceada") return "P Balanceada";
+  if (nome === "pontuação anterior") return "P Anterior";
+  if (nome === "pontuação on-chain") return "P On-Chain";
+  if (nome === "tendência consolidada") return "T Consolidada";
+  if (nome === "símbolo") return "Símbolo";
+  if (nome === "ranking") return "Ranking";
+  if (nome === "link") return "Link";
+  return c;
 }
 </script>
 
