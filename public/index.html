@@ -31,7 +31,7 @@
 
     .painel {
       padding: 15px;
-      display: block;
+      display: none;
       color: #000000;
     }
 
@@ -80,9 +80,10 @@
 </header>
 
 <div id="login">
-  <input type="email" id="email" placeholder="Seu e-mail" />
-  <input type="text" id="codigo" placeholder="Código" />
-  <button onclick="verificarLogin()">Entrar</button>
+  <input type="email" id="email" placeholder="Seu e-mail" /><br>
+  <input type="text" id="codigo" placeholder="Código (se aplicável)" /><br>
+  <input type="text" id="hash" placeholder="Hash da transação (opcional)" /><br>
+  <button onclick="verificarAcesso()">Entrar</button>
   <p id="erro" style="color:red;"></p>
 </div>
 
@@ -96,15 +97,29 @@
 <script>
 const urlAPI = "https://script.google.com/macros/s/AKfycbxvWUfo_Fzlm6b2ZP20-aK5AEeF4b1phehQmvUBsWoja9aALWuAq8aiK0LYOQEb93MF/exec";
 
-function verificarLogin() {
+function verificarAcesso() {
   const email = document.getElementById("email").value.trim();
   const codigo = document.getElementById("codigo").value.trim();
-  if (!email || !codigo) {
-    document.getElementById("erro").innerText = "Preencha e-mail e código.";
+  const hash = document.getElementById("hash").value.trim();
+
+  if (!email && !hash) {
+    document.getElementById("erro").innerText = "Preencha o e-mail ou o hash.";
     return;
   }
 
-  fetch(`${urlAPI}?email=${email}&codigo=${codigo}`)
+  let url = `${urlAPI}?acao=verificar`;
+
+  if (hash) {
+    url += `&hash=${encodeURIComponent(hash)}`;
+  } else {
+    if (!codigo) {
+      document.getElementById("erro").innerText = "Código obrigatório com e-mail.";
+      return;
+    }
+    url += `&email=${encodeURIComponent(email)}&codigo=${encodeURIComponent(codigo)}`;
+  }
+
+  fetch(url)
     .then(res => res.json())
     .then(json => {
       if (json.erro) {
@@ -116,61 +131,28 @@ function verificarLogin() {
       document.querySelector(".painel").style.display = "block";
 
       const dados = json.dados || json;
-
       if (!dados || dados.length === 0) {
         document.getElementById("painel").innerHTML = "<p style='color:red'>Nenhum dado retornado.</p>";
         return;
       }
 
-      const colunas = Object.keys(dados[0]).filter(c => {
-        const nome = c.trim().toLowerCase();
-        return nome !== "nome" && nome !== "preço" && nome !== "volume" && nome !== "market cap";
-      });
+      const colunas = Object.keys(dados[0]);
+      const prioridade = ["símbolo", "pontuação anterior", "link", "pontuação on-chain", "pontuação balanceada", "ranking"];
+      const colunasOrdenadas = [...colunas.filter(c => prioridade.includes(c.toLowerCase())), ...colunas.filter(c => !prioridade.includes(c.toLowerCase()))];
 
-      const prioridade = [
-        "símbolo",
-        "pontuação anterior",
-        "link",
-        "pontuação on-chain",
-        "pontuação balanceada",
-        "ranking"
-      ];
-
-      const colunasOrdenadas = [
-        ...colunas.filter(c => prioridade.includes(c.trim().toLowerCase())),
-        ...colunas.filter(c =>
-          !prioridade.includes(c.trim().toLowerCase())
-        )
-      ];
-
-      const dadosFormatados = dados.map(item =>
-        colunasOrdenadas.map(campo =>
-          campo.toLowerCase() === "link"
-            ? `<a href="${item[campo]}" target="_blank">Ver</a>`
-            : item[campo]
-        )
-      );
+      const dadosFormatados = dados.map(item => colunasOrdenadas.map(campo =>
+        campo.toLowerCase() === "link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo]
+      ));
 
       $('#painel').DataTable({
         data: dadosFormatados,
-        columns: colunasOrdenadas.map(c => {
-          let titulo = c.trim();
-          const nome = titulo.toLowerCase();
-          if (nome === "pontuação anterior") titulo = "P Anterior";
-          else if (nome === "pontuação balanceada") titulo = "P Balanceada";
-          else if (nome === "pontuação on-chain") titulo = "P On-Chain";
-          else if (nome === "tendência consolidada") titulo = "T Consolidada";
-          else if (nome === "símbolo") titulo = "Símbolo";
-          else if (nome === "ranking") titulo = "Ranking";
-          else if (nome === "link") titulo = "Link";
-          return { title: titulo };
-        }),
+        columns: colunasOrdenadas.map(c => ({ title: formatarColuna(c) })),
         scrollX: true,
         paging: false,
         searching: false,
         info: false,
         createdRow: function(row, data) {
-          const idx = colunasOrdenadas.findIndex(c => c.trim().toLowerCase() === "pontuação balanceada");
+          const idx = colunasOrdenadas.findIndex(c => c.toLowerCase() === "pontuação balanceada");
           if (idx >= 0) {
             const score = parseFloat(data[idx]);
             if (score >= 600) $(row).addClass('azul');
@@ -179,15 +161,24 @@ function verificarLogin() {
             else if (score >= 250) $(row).addClass('rosa');
           }
         },
-        language: {
-          url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json"
-        }
+        language: { url: "//cdn.datatables.net/plug-ins/1.13.4/i18n/pt-BR.json" }
       });
     })
-    .catch((erro) => {
-      console.error("Erro ao buscar API:", erro);
-      document.getElementById("erro").innerText = "Erro ao carregar dados.";
+    .catch(() => {
+      document.getElementById("erro").innerText = "Erro ao buscar dados.";
     });
+}
+
+function formatarColuna(c) {
+  const nome = c.toLowerCase();
+  if (nome === "pontuação anterior") return "P Anterior";
+  if (nome === "pontuação balanceada") return "P Balanceada";
+  if (nome === "pontuação on-chain") return "P On-Chain";
+  if (nome === "tendência consolidada") return "T Consolidada";
+  if (nome === "símbolo") return "Símbolo";
+  if (nome === "ranking") return "Ranking";
+  if (nome === "link") return "Link";
+  return c;
 }
 </script>
 
