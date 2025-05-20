@@ -6,10 +6,44 @@
   <title>On-Chain SetValues</title>
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css" />
   <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f0; margin: 0; padding: 0; padding-top: 120px; color: #000; }
-    header { position: fixed; top: 0; width: 100%; z-index: 999; background: #fff; padding: 15px; text-align: center; border-bottom: 1px solid #ccc; }
-    #login { padding: 15px; text-align: center; }
-    .painel { padding: 15px; display: none; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding-top: 120px;
+      color: #000;
+    }
+    header {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      z-index: 999;
+      background: #fff;
+      padding: 15px;
+      text-align: center;
+      border-bottom: 1px solid #ccc;
+    }
+    #login {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+    }
+    #login input {
+      padding: 10px;
+      width: 260px;
+      font-size: 16px;
+    }
+    #login button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .painel {
+      padding: 15px;
+      display: none;
+    }
     .azul { background-color: #3399ff !important; }
     .verde { background-color: #4D4D4D !important; color: #fff !important; }
     .amarelo { background-color: #A05200 !important; color: #fff !important; }
@@ -27,7 +61,7 @@
 
 <div id="login">
   <input type="email" id="email" placeholder="Seu e-mail autorizado" />
-  <button onclick="enviarCodigo()">Enviar código</button><br><br>
+  <button onclick="enviarCodigo()">Enviar código</button>
   <input type="text" id="codigo" placeholder="Digite o código" />
   <button onclick="verificarCodigo()">Entrar</button>
   <p id="mensagem" style="color:red;"></p>
@@ -41,32 +75,30 @@
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 
 <script>
-  const urlAPI = "https://script.google.com/macros/s/AKfycby6nK1df9XhD96xMLmJeWVRcQw5BRlPZ1R5LdiqArABNe_g5LLz-mc6QPpdAxZrqml3Sw/exec"; // Substitua aqui
+  const urlAPI = "https://script.google.com/macros/s/AKfycby6nK1df9XhD96xMLmJeWVRcQw5BRlPZ1R5LdiqArABNe_g5LLz-mc6QPpdAxZrqml3Sw/exec";
 
   function enviarCodigo() {
     const email = document.getElementById("email").value.trim();
+    const msg = document.getElementById("mensagem");
     if (!email) {
-      document.getElementById("mensagem").textContent = "Informe seu e-mail.";
+      msg.textContent = "Informe seu e-mail.";
       return;
     }
     fetch(`${urlAPI}?acao=enviar&email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(res => {
-        if (res.erro) {
-          document.getElementById("mensagem").textContent = res.erro;
-        } else {
-          document.getElementById("mensagem").style.color = "green";
-          document.getElementById("mensagem").textContent = res.status;
-        }
+        msg.style.color = res.erro ? "red" : "green";
+        msg.textContent = res.erro || res.status;
       })
-      .catch(() => document.getElementById("mensagem").textContent = "Erro ao enviar o código.");
+      .catch(() => msg.textContent = "Erro ao enviar o código.");
   }
 
   function verificarCodigo() {
     const email = document.getElementById("email").value.trim();
     const codigo = document.getElementById("codigo").value.trim();
+    const msg = document.getElementById("mensagem");
     if (!email || !codigo) {
-      document.getElementById("mensagem").textContent = "Preencha e-mail e código.";
+      msg.textContent = "Preencha e-mail e código.";
       return;
     }
 
@@ -74,14 +106,14 @@
       .then(r => r.json())
       .then(res => {
         if (res.erro) {
-          document.getElementById("mensagem").textContent = res.erro;
+          msg.textContent = res.erro;
         } else {
           document.getElementById("login").style.display = "none";
           document.querySelector(".painel").style.display = "block";
           carregarTabela(res);
         }
       })
-      .catch(() => document.getElementById("mensagem").textContent = "Erro ao verificar.");
+      .catch(() => msg.textContent = "Erro ao verificar.");
   }
 
   function carregarTabela(dados) {
@@ -92,7 +124,11 @@
 
     const colunas = Object.keys(dados[0]);
     const dadosFormatados = dados.map(item =>
-      colunas.map(campo => campo.toLowerCase() === "link" ? `<a href="${item[campo]}" target="_blank">Ver</a>` : item[campo])
+      colunas.map(campo =>
+        campo.toLowerCase() === "link"
+          ? `<a href="${item[campo]}" target="_blank">Ver</a>`
+          : item[campo]
+      )
     );
 
     $('#painel').DataTable({
@@ -102,7 +138,7 @@
       paging: false,
       searching: false,
       info: false,
-      createdRow: function(row, data) {
+      createdRow: function (row, data) {
         const score = parseFloat(data[colunas.indexOf("Pontuação Balanceada")]);
         if (score >= 600) $(row).addClass('azul');
         else if (score >= 500) $(row).addClass('verde');
