@@ -61,9 +61,7 @@
 
 <div id="login">
   <input type="email" id="email" placeholder="Seu e-mail autorizado" />
-  <button onclick="enviarCodigo()">Enviar código</button>
-  <input type="text" id="codigo" placeholder="Digite o código" />
-  <button onclick="verificarCodigo()">Entrar</button>
+  <button onclick="verificarEmail()">Entrar</button>
   <p id="mensagem" style="color:red;"></p>
 </div>
 
@@ -77,32 +75,15 @@
 <script>
   const urlAPI = "https://script.google.com/macros/s/AKfycby6nK1df9XhD96xMLmJeWVRcQw5BRlPZ1R5LdiqArABNe_g5LLz-mc6QPpdAxZrqml3Sw/exec";
 
-  function enviarCodigo() {
+  function verificarEmail() {
     const email = document.getElementById("email").value.trim();
     const msg = document.getElementById("mensagem");
     if (!email) {
       msg.textContent = "Informe seu e-mail.";
       return;
     }
-    fetch(`${urlAPI}?acao=enviar&email=${encodeURIComponent(email)}`)
-      .then(r => r.json())
-      .then(res => {
-        msg.style.color = res.erro ? "red" : "green";
-        msg.textContent = res.erro || res.status;
-      })
-      .catch(() => msg.textContent = "Erro ao enviar o código.");
-  }
 
-  function verificarCodigo() {
-    const email = document.getElementById("email").value.trim();
-    const codigo = document.getElementById("codigo").value.trim();
-    const msg = document.getElementById("mensagem");
-    if (!email || !codigo) {
-      msg.textContent = "Preencha e-mail e código.";
-      return;
-    }
-
-    fetch(`${urlAPI}?acao=verificar&email=${encodeURIComponent(email)}&codigo=${codigo}`)
+    fetch(`${urlAPI}?acao=verificar&email=${encodeURIComponent(email)}`)
       .then(r => r.json())
       .then(res => {
         if (res.erro) {
@@ -113,7 +94,7 @@
           carregarTabela(res);
         }
       })
-      .catch(() => msg.textContent = "Erro ao verificar.");
+      .catch(() => msg.textContent = "Erro ao verificar e-mail.");
   }
 
   function carregarTabela(dados) {
